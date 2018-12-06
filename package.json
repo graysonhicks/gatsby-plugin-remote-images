@@ -1,6 +1,6 @@
 {
   "name": "gatsby-plugin-remote-images",
-  "version": "1.0.0",
+  "version": "0.0.1",
   "description": "Gatsby plugin download remote images from string fields on other nodes.",
   "author": "Grayson Hicks <graysonhicks@gmail.com>",
   "main": "gatsby-node.js",

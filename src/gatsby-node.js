@@ -18,7 +18,7 @@ exports.onCreateNode = async (
   if (node.internal.type === nodeType) {
     try {
       fileNode = await createRemoteFileNode({
-        url: ext ? `${get(node, imagePath)}.${ext}` : get(node, imagePath),
+        url: ext ? `${get(node, imagePath)}${ext}` : get(node, imagePath),
         store,
         cache,
         createNode,
@@ -26,12 +26,10 @@ exports.onCreateNode = async (
         auth,
         ext,
       })
-      console.log('FILE:', fileNode)
     } catch (e) {
       console.error('gatsby-plugin-remote-images ERROR:', e)
     }
   }
-
   // Adds a field `localImage` or custom name to the node
   // ___NODE appendix tells Gatsby that this field will link to another node
   if (fileNode) {

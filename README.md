@@ -68,7 +68,7 @@ allMyNodes {
   }
 ```
 
-*Absolute image NOT available to gatsby-image*
+*Absolute imageUrl NOT available to gatsby-image*
 ```javascript
 allMyNodes: [
   {
@@ -79,7 +79,7 @@ allMyNodes: [
   }
 ]
 ```
-*Relative image IS available to gatsby-image*
+*Relative imageUrl IS available to gatsby-image*
 ```javascript
 allMyNodes: [
   {
@@ -99,7 +99,7 @@ To get the images and make them avabilable for the above example, follow the ins
 module.exports = {
   plugins: [
     {
-      resolve: `gatsby-source-remote-images`,
+      resolve: `gatsby-plugin-remote-images`,
       options: {
         nodeType: 'myNodes',
         imagePath: 'imageUrl',

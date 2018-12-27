@@ -16,7 +16,7 @@ module.exports = {
     {
       resolve: `gatsby-plugin-remote-images`,
       options: {
-        nodeType: 'yourTargetNode',
+        nodeType: 'myNodes',
         imagePath: 'path.to.image',
       },
     },
@@ -33,11 +33,11 @@ module.exports = {
         // The node type that has the images you want to grab.
         // This is generally the camelcased verion of the word
         // after the 'all' in GraphQL ie. allMyImages type is myImages
-        nodeType: 'yourTargetNode',
+        nodeType: 'myNodes',
         // String that is path to the image you want to use, relative to the node.
         // This uses lodash .get, see docs for accepted formats [here](https://lodash.com/docs/4.17.11#get).
         imagePath: 'path.to.image',
-        // ALL OPTIONAL BELOW HERE: 
+        // ** ALL OPTIONAL BELOW HERE: ** 
         //Name you want to give new image field on the node.
         // Defaults to 'localImage'.
         name: 'theNewImageField',
@@ -54,33 +54,44 @@ module.exports = {
 ```
 
 ### Why?
-Why do you need this plugin? This lets you use the fantastic gatsby-image tool on images that in an API with an _absolute_ path.  For example, look at these two response from one GraphQL query:
+Why do you need this plugin? The fantastic gatsby-image tool only works on _relative_ paths.  This lets you use it on images from an API with an _absolute_ path.  For example, look at these two response from one GraphQL query:
 
 *Query*
 ```graphql
-allItems {
-  thumbnailSrc
-}
+allMyNodes {
+    edges {
+      node {
+        id
+        imageUrl
+      }
+    }
+  }
 ```
 
 *Absolute image NOT available to gatsby-image*
 ```javascript
-allItems: [
+allMyNodes: [
   {
-    thumbnailSrc: 'http://remoteimage.com/url.jpg'
+    node: {
+      id: 123,
+      imageUrl: 'http://remoteimage.com/url.jpg'
+    }
   }
 ]
 ```
 *Relative image IS available to gatsby-image*
 ```javascript
-allItems: [
+allMyNodes: [
   {
-    thumbnailSrc: 'images/local/url.jpg'
+    node: {
+      id: 123,
+      imageUrl: 'localImages/url.jpg'
+    }
   }
 ]
 ```
 
-If you don't control the API that you are hitting (many third party APIs return a field with a string to an absolute path for an image), this means those image aren't run through gatsby-image and you lose all of those benefits.
+If you don't control the API that you are hitting (many third party APIs return a field with a string to an absolute path for an image), this means those image aren't run through gatsby-image and you lose all of the benefits.
 
 To get the images and make them avabilable for the above example, follow the install instructions and your config should look like this:
 
@@ -90,8 +101,8 @@ module.exports = {
     {
       resolve: `gatsby-source-remote-images`,
       options: {
-        nodeType: 'items',
-        imagePath: 'thumbnailSrc',
+        nodeType: 'myNodes',
+        imagePath: 'imageUrl',
         // OPTIONAL: Name you want to give new image field on the node.
         // Defaults to 'localImage'.
         name: 'allItemImages',
@@ -101,14 +112,20 @@ module.exports = {
 }
 ```
 
-Now, if we query `allItemImages` we can query as we would any gatsby-image node:
+Now, if we query `allMyNodes` we can query as we would any gatsby-image node:
 
 ```graphql
-allItemsImages {
-    childImageSharp {
-      fluid(maxWidth: 400, maxHeight: 250) {
-        ...GatsbyImageSharpFluid
+allMyNodes {
+  edges {
+    node {
+      localImage {
+        childImageSharp {
+          fluid(maxWidth: 400, maxHeight: 250) {
+            ...GatsbyImageSharpFluid
+          }
+        }
       }
     }
+  }
 }
 ```

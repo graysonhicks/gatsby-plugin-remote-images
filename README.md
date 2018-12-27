@@ -31,7 +31,7 @@ module.exports = {
       resolve: `gatsby-plugin-remote-images`,
       options: {
         // The node type that has the images you want to grab.
-        // This is generally the camelcased verion of the word
+        // This is generally the camelcased version of the word
         // after the 'all' in GraphQL ie. allMyImages type is myImages
         nodeType: 'myNodes',
         // String that is path to the image you want to use, relative to the node.

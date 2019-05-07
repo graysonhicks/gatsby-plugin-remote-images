@@ -19,6 +19,7 @@ exports.onCreateNode = async (
     try {
       fileNode = await createRemoteFileNode({
         url: ext ? `${get(node, imagePath)}${ext}` : get(node, imagePath),
+        parentNodeId: node.id,
         store,
         cache,
         createNode,

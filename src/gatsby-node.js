@@ -16,9 +16,15 @@ exports.onCreateNode = async (
 
   let fileNode
   if (node.internal.type === nodeType) {
+
+    const url = ext ? `${get(node, imagePath)}${ext}` : get(node, imagePath)
+    if (!url) {
+      return 
+    }
+
     try {
       fileNode = await createRemoteFileNode({
-        url: ext ? `${get(node, imagePath)}${ext}` : get(node, imagePath),
+        url,
         parentNodeId: node.id,
         store,
         cache,

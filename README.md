@@ -40,7 +40,7 @@ module.exports = {
         // For traversing objects with arrays at given depths, see [how to handle arrays below](#traversing-objects-with-arrays)
         imagePath: 'path.to.image',
         // ** ALL OPTIONAL BELOW HERE: ** 
-        //Name you want to give new image field on the node.
+        // Name you want to give new image field on the node.
         // Defaults to 'localImage'.
         name: 'theNewImageField',
         // Adds htaccess authentication to the download request if passed in.
@@ -49,6 +49,9 @@ module.exports = {
         // from its extension. Or for changing the extention.  Defaults to existing
         // file extension.
         ext: ".jpg",
+        // Allows modification of the URL per image if needed. Expects a function
+        // taking the original URL as a parameter and returning the desired URL.
+        prepareUrl: url => url.startsWith('//') ? `https:${url}` : url
       },
     },
   ]

@@ -34,8 +34,10 @@ module.exports = {
         // This is generally the camelcased version of the word
         // after the 'all' in GraphQL ie. allMyImages type is myImages
         nodeType: 'myNodes',
-        // String that is path to the image you want to use, relative to the node.
-        // This uses lodash .get, see docs for accepted formats [here](https://lodash.com/docs/4.17.11#get).
+        // For simple object traversal, this is the string path to the image you
+        // want to use, relative to the node.
+        // This uses lodash .get, see [docs for accepted formats here](https://lodash.com/docs/4.17.11#get).
+        // For traversing objects with arrays at given depths, see [how to handle arrays below](#traversing-objects-with-arrays)
         imagePath: 'path.to.image',
         // ** ALL OPTIONAL BELOW HERE: ** 
         //Name you want to give new image field on the node.
@@ -129,3 +131,53 @@ allMyNodes {
   }
 }
 ```
+### Traversing objects with arrays
+
+Since some GraphQL APIs will send back objects with nested arrays where your target data lives, `gatsby-plugin-remote-images` also supports traversing objects that have arrays at arbitrary depths. To opt in to this feature, add an array literal, `[]`, to the end of the node you want to indicate is an array. 
+
+##### Note: arrays of image urls at leaf nodes are currently not supported
+
+Given an object structure like this:
+```javascript
+allMyNodes {
+  nodes: [
+    {
+      imageUrl: 'https://...'
+    },
+    ...
+  ]
+}
+```
+
+To get the images and make them avabilable for the above example, your config should look like this:
+```javascript
+module.exports = {
+  plugins: [
+    {
+      resolve: `gatsby-plugin-remote-images`,
+      options: {
+        nodeType: 'myNodes',
+        imagePath: 'nodes[].imageUrl',
+      },
+    },
+  ]
+}
+```
+
+Now, if we query `allMyNodes` we can query as we would any gatsby-image node:
+
+```graphql
+allMyNodes {
+  nodes {
+    localImage {
+      childImageSharp {
+        fluid(maxWidth: 400, maxHeight: 250) {
+          ...GatsbyImageSharpFluid
+        }
+      }
+    }
+  }
+}
+```
+
+##### Note: While `lodash .get` doesn't natively support this syntax, it is still used to traverse the object structure, so [the documentation for `.get`](https://lodash.com/docs/4.17.11#get) still applies in full. 

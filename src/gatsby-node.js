@@ -12,6 +12,7 @@ exports.onCreateNode = async (
     name = 'localImage',
     auth = {},
     ext = null,
+    prepareUrl = null,
   } = options
   const createImageNodeOptions = {
     store,
@@ -21,6 +22,7 @@ exports.onCreateNode = async (
     auth,
     ext,
     name,
+    prepareUrl,
   }
 
   if (node.internal.type === nodeType) {
@@ -47,11 +49,15 @@ function getPath(node, path, ext = null) {
 
 // Creates a file node and associates the parent node to its new child
 async function createImageNode(url, node, options) {
-  const { name, imagePathSegments, ...restOfOptions } = options
+  const { name, imagePathSegments, prepareUrl, ...restOfOptions } = options
   let fileNode
 
   if (!url) {
     return
+  }
+
+  if (typeof prepareUrl === 'function') {
+    url = prepareUrl(url);
   }
 
   try {

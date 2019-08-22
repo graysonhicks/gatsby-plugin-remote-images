@@ -47,7 +47,7 @@ function getPath(node, path, ext = null) {
 
 // Creates a file node and associates the parent node to its new child
 async function createImageNode(url, node, options) {
-  const { name, ...restOfOptions } = options
+  const { name, imagePathSegments, ...restOfOptions } = options
   let fileNode
 
   if (!url) {

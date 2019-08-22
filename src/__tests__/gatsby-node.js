@@ -1,9 +1,16 @@
-const { onCreateNode } = require(`../gatsby-node`)
+jest.mock('gatsby-source-filesystem');
+
+const { createRemoteFileNode } = require('gatsby-source-filesystem');
+const { onCreateNode } = require(`../gatsby-node`);
+
+const getGatsbyNodeHelperMocks = () => ({
+  actions: { createNode: jest.fn() },
+  createNodeId: jest.fn().mockReturnValue('remoteFileIdHere'),
+  store: {},
+  cache: {},
+});
 
 describe('gatsby-plugin-remote-images', () => {
-  const actions = {
-    createNode: jest.fn(),
-  };
   const baseNode = {
     id: 'testing',
     parent: null,
@@ -16,53 +23,50 @@ describe('gatsby-plugin-remote-images', () => {
   };
   const baseOptions = {
     nodeType: 'test',
-    imagePath: 'imageUrl'
-  };
-  const createNodeId = jest.fn().mockReturnValue('remoteFileIdHere');
-  const store = {
-    getState: jest.fn().mockReturnValue({program: { directory: './'}})
-  }
-  const cache = {
-    get: jest.fn(),
-    set: jest.fn()
+    imagePath: 'imageUrl',
   };
 
   it('creates remote file node with defaults', () => {
     const node = {
       ...baseNode
-    }
+    };
     const options = {
       ...baseOptions
     };
-    
+    const { actions, createNodeId, store, cache } = getGatsbyNodeHelperMocks();
 
     return onCreateNode({ node, actions, createNodeId, store, cache }, options).then(() => {
-      const fileNode = actions.createNode.mock.calls[0][0]
-      expect(actions.createNode).toHaveBeenCalledTimes(1);
       expect(createNodeId).toHaveBeenCalledTimes(1);
-      expect(fileNode.ext).toBe('.png');
-      expect(fileNode.url).toBe(node.imageUrl);
-      expect(fileNode.internal.type).toBe('File');
-      expect(fileNode.parent).toBe('testing');
+      expect(createRemoteFileNode).toHaveBeenLastCalledWith({
+        parentNodeId: 'testing',
+        url: node.imageUrl,
+        ext: null,
+        store,
+        cache,
+        createNode: actions.createNode,
+        createNodeId,
+        auth: {},
+      });
       expect(node['localImage___NODE']).toBe('remoteFileIdHere');
     });
   });
 
-  it('can use the name option', () => {
+  it('can use the `name` option', () => {
     const node = {
       ...baseNode
-    }
+    };
     const options = {
       ...baseOptions,
-      name: 'myNewField'
+      name: 'myNewField',
     };
-    
+    const { actions, createNodeId, store, cache } = getGatsbyNodeHelperMocks();
+
     return onCreateNode({ node, actions, createNodeId, store, cache }, options).then(() => {
-      const fileNode = actions.createNode.mock.calls[0][0]
       expect(node[`${options.name}___NODE`]).toBe('remoteFileIdHere');
     });
   })
-  it('can use the ext option', () => {
+
+  it('can use the `ext` option', () => {
     const node = {
       ...baseNode,
       imageUrl: 'https://dummyimage.com/600x400/000/fff',
@@ -71,15 +75,61 @@ describe('gatsby-plugin-remote-images', () => {
         type: 'test',
         mediaType: 'image/jpg',
       }
-    }
+    };
     const options = {
       ...baseOptions,
-      ext: '.jpg'
+      ext: '.jpg',
     };
+    const { actions, createNodeId, store, cache } = getGatsbyNodeHelperMocks();
+
     return onCreateNode({ node, actions, createNodeId, store, cache }, options).then(() => {
-      const fileNode = actions.createNode.mock.calls[1][0];
-      expect(fileNode.ext).toBe('.jpg');
+      expect(createNodeId).toHaveBeenCalledTimes(1);
+      expect(createRemoteFileNode).toHaveBeenLastCalledWith({
+        parentNodeId: 'testing',
+        url: node.imageUrl + options.ext,
+        ext: options.ext,
+        store,
+        cache,
+        createNode: actions.createNode,
+        createNodeId,
+        auth: {},
+      });
+      expect(node['localImage___NODE']).toBe('remoteFileIdHere');
     });
   });
 
+  it('can have nested arrays in `imagePath`', () => {
+    const node = {
+      ...baseNode,
+      nodes: [{
+        id: 'nested parent',
+        imageUrl: 'https://dummyimage.com/600x400/000/fff.png',
+      }],
+      internal: {
+        contentDigest: 'testdigest',
+        type: 'test',
+        mediaType: 'application/json',
+      }
+    };
+    const options = {
+      ...baseOptions,
+      imagePath: 'nodes[].imageUrl',
+    };
+    const { actions, createNodeId, store, cache } = getGatsbyNodeHelperMocks();
+
+    return onCreateNode({ node, actions, createNodeId, store, cache }, options).then(() => {
+      expect(createNodeId).toHaveBeenCalledTimes(1);
+      expect(createRemoteFileNode).toHaveBeenLastCalledWith({
+        parentNodeId: 'nested parent',
+        url: node.nodes[0].imageUrl,
+        ext: null,
+        store,
+        cache,
+        createNode: actions.createNode,
+        createNodeId,
+        auth: {},
+      });
+      expect(node.nodes[0]['localImage___NODE']).toBe('remoteFileIdHere');
+    });
+  });
 })

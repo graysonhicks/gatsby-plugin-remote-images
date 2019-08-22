@@ -131,6 +131,10 @@ allMyNodes {
   }
 }
 ```
+
+#### Note on `gatsby-source-graphql`
+Due to the way `gatsby-source-graphql` creates nodes, it is currently impossible for any transformer type plugin to traverse the data from that plugin.  [Please read this issue for explanantion](https://github.com/gatsbyjs/gatsby/issues/8404).  As soon as that as fixed in `gatsby-source-graphql`, this plugin will be tested to make sure it works with it as well.
+
 ### Traversing objects with arrays
 
 Since some GraphQL APIs will send back objects with nested arrays where your target data lives, `gatsby-plugin-remote-images` also supports traversing objects that have arrays at arbitrary depths. To opt in to this feature, add an array literal, `[]`, to the end of the node you want to indicate is an array. 

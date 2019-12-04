@@ -19,7 +19,7 @@ describe('gatsby-plugin-remote-images', () => {
       contentDigest: 'testdigest',
       type: 'test',
       mediaType: 'image/png',
-    }
+    },
   };
   const baseOptions = {
     nodeType: 'test',
@@ -28,14 +28,17 @@ describe('gatsby-plugin-remote-images', () => {
 
   it('creates remote file node with defaults', () => {
     const node = {
-      ...baseNode
+      ...baseNode,
     };
     const options = {
-      ...baseOptions
+      ...baseOptions,
     };
     const { actions, createNodeId, store, cache } = getGatsbyNodeHelperMocks();
 
-    return onCreateNode({ node, actions, createNodeId, store, cache }, options).then(() => {
+    return onCreateNode(
+      { node, actions, createNodeId, store, cache },
+      options
+    ).then(() => {
       expect(createNodeId).toHaveBeenCalledTimes(1);
       expect(createRemoteFileNode).toHaveBeenLastCalledWith({
         parentNodeId: 'testing',
@@ -53,7 +56,7 @@ describe('gatsby-plugin-remote-images', () => {
 
   it('can use the `name` option', () => {
     const node = {
-      ...baseNode
+      ...baseNode,
     };
     const options = {
       ...baseOptions,
@@ -61,10 +64,13 @@ describe('gatsby-plugin-remote-images', () => {
     };
     const { actions, createNodeId, store, cache } = getGatsbyNodeHelperMocks();
 
-    return onCreateNode({ node, actions, createNodeId, store, cache }, options).then(() => {
+    return onCreateNode(
+      { node, actions, createNodeId, store, cache },
+      options
+    ).then(() => {
       expect(node[`${options.name}___NODE`]).toBe('remoteFileIdHere');
     });
-  })
+  });
 
   it('can use the `ext` option', () => {
     const node = {
@@ -74,7 +80,7 @@ describe('gatsby-plugin-remote-images', () => {
         contentDigest: 'testdigest',
         type: 'test',
         mediaType: 'image/jpg',
-      }
+      },
     };
     const options = {
       ...baseOptions,
@@ -82,7 +88,10 @@ describe('gatsby-plugin-remote-images', () => {
     };
     const { actions, createNodeId, store, cache } = getGatsbyNodeHelperMocks();
 
-    return onCreateNode({ node, actions, createNodeId, store, cache }, options).then(() => {
+    return onCreateNode(
+      { node, actions, createNodeId, store, cache },
+      options
+    ).then(() => {
       expect(createNodeId).toHaveBeenCalledTimes(1);
       expect(createRemoteFileNode).toHaveBeenLastCalledWith({
         parentNodeId: 'testing',
@@ -101,15 +110,17 @@ describe('gatsby-plugin-remote-images', () => {
   it('can have nested arrays in `imagePath`', () => {
     const node = {
       ...baseNode,
-      nodes: [{
-        id: 'nested parent',
-        imageUrl: 'https://dummyimage.com/600x400/000/fff.png',
-      }],
+      nodes: [
+        {
+          id: 'nested parent',
+          imageUrl: 'https://dummyimage.com/600x400/000/fff.png',
+        },
+      ],
       internal: {
         contentDigest: 'testdigest',
         type: 'test',
         mediaType: 'application/json',
-      }
+      },
     };
     const options = {
       ...baseOptions,
@@ -117,7 +128,10 @@ describe('gatsby-plugin-remote-images', () => {
     };
     const { actions, createNodeId, store, cache } = getGatsbyNodeHelperMocks();
 
-    return onCreateNode({ node, actions, createNodeId, store, cache }, options).then(() => {
+    return onCreateNode(
+      { node, actions, createNodeId, store, cache },
+      options
+    ).then(() => {
       expect(createNodeId).toHaveBeenCalledTimes(1);
       expect(createRemoteFileNode).toHaveBeenLastCalledWith({
         parentNodeId: 'nested parent',
@@ -132,4 +146,4 @@ describe('gatsby-plugin-remote-images', () => {
       expect(node.nodes[0]['localImage___NODE']).toBe('remoteFileIdHere');
     });
   });
-})
+});

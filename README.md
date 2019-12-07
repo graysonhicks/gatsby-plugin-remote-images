@@ -1,7 +1,8 @@
 # :floppy_disk: gatsby-plugin-remote-images
 
-Download images from any string field on another node so that those images can
-be queried with `gatsby-image`.
+Download images from any string field on a node so that those images can be
+queried and used with
+[`gatsby-image`](https://www.gatsbyjs.org/packages/gatsby-image/).
 
 ### Usage
 
@@ -22,8 +23,8 @@ module.exports = {
     {
       resolve: `gatsby-plugin-remote-images`,
       options: {
-        nodeType: 'myNodes',
-        imagePath: 'path.to.image',
+        nodeType: 'myNode',
+        imageUrlField: 'imageUrl',
       },
     },
   ],
@@ -38,27 +39,30 @@ module.exports = {
     {
       resolve: `gatsby-plugin-remote-images`,
       options: {
-        // The node type that has the images you want to grab.
-        // This is generally the camelcased version of the word
-        // after the 'all' in GraphQL ie. allMyImages type is myImages
-        nodeType: 'myNodes',
-        // For simple object traversal, this is the string path to the image you
-        // want to use, relative to the node.
-        // This uses lodash .get, see [docs for accepted formats here](https://lodash.com/docs/4.17.11#get).
-        // For traversing objects with arrays at given depths, see [how to handle arrays below](#traversing-objects-with-arrays)
-        imagePath: 'path.to.image',
+        // The node type that has the images you want to grab. For top-level
+        // nodes, this is often the camel-cased version of the word after the
+        // 'all' in GraphQL (e.g. the node type of the nodes `allMyImage` type
+        // is `myImage`). For other nodes, you will need to identify the type
+        // by examining the schema.
+        nodeType: 'myNode',
+        // This is the field on each 'myNode' that contains the URL to the
+        // image.
+        imageUrlField: 'imageUrl',
+        //
         // ** ALL OPTIONAL BELOW HERE: **
-        // Name you want to give new image field on the node.
-        // Defaults to 'localImage'.
-        name: 'theNewImageField',
+        //
+        // Name you want to give new image file field on the node.
+        imageFileField: 'theNewImageField', // default: 'localImage'
         // Adds htaccess authentication to the download request if passed in.
         auth: { htaccess_user: `USER`, htaccess_pass: `PASSWORD` },
-        // Sets the file extension. Useful for APIs that separate the image file path
-        // from its extension. Or for changing the extention.  Defaults to existing
-        // file extension.
+        // Sets the file extension. Useful for APIs that separate the image file
+        // path from its extension. Or for changing the extension.  Defaults to
+        // existing file extension.
         ext: '.jpg',
-        // Allows modification of the URL per image if needed. Expects a function
-        // taking the original URL as a parameter and returning the desired URL.
+        // Allows modification of the URL per image if needed. Expects a
+        // function taking the original URL as a parameter and returning the
+        // desired URL. Note: the url passed in to this function already
+        // includes the extension from the 'ext' option (if provided).
         prepareUrl: url => (url.startsWith('//') ? `https:${url}` : url),
       },
     },
@@ -75,7 +79,8 @@ path. For example, look at these two response from one GraphQL query:
 _Query_
 
 ```graphql
-allMyNodes {
+{
+  allMyNode {
     edges {
       node {
         id
@@ -83,37 +88,48 @@ allMyNodes {
       }
     }
   }
+}
 ```
 
 _Absolute imageUrl NOT available to gatsby-image_
 
-```javascript
-allMyNodes: [
-  {
-    node: {
-      id: 123,
-      imageUrl: 'http://remoteimage.com/url.jpg',
-    },
-  },
-];
+```json
+{
+  "allMyNode": {
+    "edges": [
+      {
+        "node": {
+          "id": 123,
+          "imageUrl": "http://remoteimage.com/url.jpg"
+        }
+      }
+    ]
+  }
+}
 ```
 
 _Relative imageUrl IS available to gatsby-image_
 
-```javascript
-allMyNodes: [
-  {
-    node: {
-      id: 123,
-      imageUrl: 'localImages/url.jpg',
-    },
-  },
-];
+```json
+{
+  "allMyNode": {
+    "edges": [
+      {
+        "node": {
+          "id": 123,
+          "imageUrl": "localImages/url.jpg"
+        }
+      }
+    ]
+  }
+}
 ```
 
 If you don't control the API that you are hitting (many third party APIs return
 a field with a string to an absolute path for an image), this means those image
-aren't run through gatsby-image and you lose all of the benefits.
+aren't run through
+[`gatsby-transformer-sharp`](https://www.gatsbyjs.org/packages/gatsby-transformer-sharp/)
+and you lose all of the benefits.
 
 To get the images and make them available for the above example, follow the
 install instructions and your config should look like this:
@@ -124,27 +140,32 @@ module.exports = {
     {
       resolve: `gatsby-plugin-remote-images`,
       options: {
-        nodeType: 'myNodes',
-        imagePath: 'imageUrl',
-        // OPTIONAL: Name you want to give new image field on the node.
-        // Defaults to 'localImage'.
-        name: 'allItemImages',
+        nodeType: 'myNode',
+        imageUrlField: 'imageUrl',
+        // OPTIONAL: Name you want to give new image file field on the node.
+        imageFileField: 'imageFile', // default: 'localImage'
       },
     },
   ],
 };
 ```
 
-Now, if we query `allMyNodes` we can query as we would any gatsby-image node:
+Now, if we query `allMyNode` we get a `File` node with a `childImageSharp` field
+(provided by `gatsby-transformer-sharp`) and it's ready for use with
+`gatsby-image`:
 
 ```graphql
-allMyNodes {
-  edges {
-    node {
-      localImage {
-        childImageSharp {
-          fluid(maxWidth: 400, maxHeight: 250) {
-            ...GatsbyImageSharpFluid
+{
+  allMyNode {
+    edges {
+      node {
+        id
+        imageUrl # required! You must include this in your query.
+        localImage {
+          childImageSharp {
+            fluid(maxWidth: 400, maxHeight: 250) {
+              ...GatsbyImageSharpFluid
+            }
           }
         }
       }
@@ -153,67 +174,7 @@ allMyNodes {
 }
 ```
 
-#### Note on `gatsby-source-graphql`
+### Migrating from older versions
 
-Due to the way `gatsby-source-graphql` creates nodes, it is currently impossible
-for any transformer type plugin to traverse the data from that plugin.
-[Please read this issue for explanation](https://github.com/gatsbyjs/gatsby/issues/8404).
-As soon as that as fixed in `gatsby-source-graphql`, this plugin will be tested
-to make sure it works with it as well.
-
-### Traversing objects with arrays
-
-Since some GraphQL APIs will send back objects with nested arrays where your
-target data lives, `gatsby-plugin-remote-images` also supports traversing
-objects that have arrays at arbitrary depths. To opt in to this feature, add an
-array literal, `[]`, to the end of the node you want to indicate is an array.
-
-##### Note: arrays of image urls at leaf nodes are currently not supported
-
-Given an object structure like this:
-
-```javascript
-allMyNodes {
-  nodes: [
-    {
-      imageUrl: 'https://...'
-    },
-    ...
-  ]
-}
-```
-
-To get the images and make them available for the above example, your config
-should look like this:
-
-```javascript
-module.exports = {
-  plugins: [
-    {
-      resolve: `gatsby-plugin-remote-images`,
-      options: {
-        nodeType: 'myNodes',
-        imagePath: 'nodes[].imageUrl',
-      },
-    },
-  ],
-};
-```
-
-Now, if we query `allMyNodes` we can query as we would any gatsby-image node:
-
-```graphql
-allMyNodes {
-  nodes {
-    localImage {
-      childImageSharp {
-        fluid(maxWidth: 400, maxHeight: 250) {
-          ...GatsbyImageSharpFluid
-        }
-      }
-    }
-  }
-}
-```
-
-##### Note: While `lodash .get` doesn't natively support this syntax, it is still used to traverse the object structure, so [the documentation for `.get`](https://lodash.com/docs/4.17.11#get) still applies in full.
+For instructions on migrating from a previous major version of this plugin,
+please see the [migration guide](MIGRATION.md).

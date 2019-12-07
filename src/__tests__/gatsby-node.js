@@ -1,7 +1,7 @@
 jest.mock('gatsby-source-filesystem');
 
 const { createRemoteFileNode } = require('gatsby-source-filesystem');
-const { onCreateNode, createResolvers } = require(`../gatsby-node`);
+const { createResolvers } = require(`../gatsby-node`);
 
 const getGatsbyNodeHelperMocks = () => ({
   actions: { createNode: jest.fn() },
@@ -9,6 +9,7 @@ const getGatsbyNodeHelperMocks = () => ({
   createResolvers: jest.fn(),
   store: {},
   cache: {},
+  reporter: {},
 });
 
 const mockContext = {
@@ -18,7 +19,7 @@ const mockContext = {
 };
 
 describe('gatsby-plugin-remote-images', () => {
-  const baseNode = {
+  const baseSourceNode = {
     id: 'testing',
     parent: null,
     imageUrl: 'https://dummyimage.com/600x400/000/fff.png',
@@ -28,43 +29,43 @@ describe('gatsby-plugin-remote-images', () => {
       mediaType: 'image/png',
     },
   };
-  const baseOptions = {
+
+  const basePluginOptions = {
     nodeType: 'test',
-    imagePath: 'imageUrl',
+    imageUrlField: 'imageUrl',
   };
 
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
   it('creates remote file node with defaults', async () => {
-    const node = {
-      ...baseNode,
-    };
-    const options = {
-      ...baseOptions,
-    };
+    const sourceNode = { ...baseSourceNode };
+    const pluginOptions = { ...basePluginOptions };
     const {
       actions,
       createNodeId,
       createResolvers: mockCreateResolvers,
       store,
       cache,
+      reporter,
     } = getGatsbyNodeHelperMocks();
 
-    await onCreateNode({ node, actions, createNodeId, store, cache }, options);
-    expect(createNodeId).toHaveBeenCalledTimes(1);
-    expect(createRemoteFileNode).toHaveBeenLastCalledWith({
-      parentNodeId: 'testing',
-      url: node.imageUrl,
-      ext: null,
-      store,
-      cache,
-      createNode: actions.createNode,
-      createNodeId,
-      auth: {},
-    });
+    createResolvers(
+      {
+        actions,
+        store,
+        cache,
+        createNodeId,
+        createResolvers: mockCreateResolvers,
+        reporter,
+      },
+      pluginOptions
+    );
 
-    createResolvers({ createResolvers: mockCreateResolvers }, options);
     expect(mockCreateResolvers).toHaveBeenCalledTimes(1);
-    expect(mockCreateResolvers).toHaveBeenLastCalledWith({
-      [options.nodeType]: {
+    expect(mockCreateResolvers).toHaveBeenCalledWith({
+      [pluginOptions.nodeType]: {
         localImage: {
           type: 'File',
           resolve: expect.any(Function),
@@ -76,23 +77,44 @@ describe('gatsby-plugin-remote-images', () => {
       id: 'newFileNode',
     });
     const fileNodeResolver =
-      mockCreateResolvers.mock.calls[0][0][options.nodeType].localImage.resolve;
-    expect(fileNodeResolver(baseNode, null, mockContext)).resolves.toEqual({
+      mockCreateResolvers.mock.calls[0][0][pluginOptions.nodeType].localImage
+        .resolve;
+
+    expect(fileNodeResolver(sourceNode, null, mockContext)).resolves.toEqual({
       id: 'newFileNode',
     });
   });
 
-  it('can use the `name` option', () => {
-    const options = {
-      ...baseOptions,
-      name: 'myNewField',
+  it('can use the `imageFileField` option', () => {
+    const pluginOptions = {
+      ...basePluginOptions,
+      imageFileField: 'myNewImageFileField',
     };
-    const { createResolvers: mockCreateResolvers } = getGatsbyNodeHelperMocks();
+    const {
+      actions,
+      createNodeId,
+      createResolvers: mockCreateResolvers,
+      store,
+      cache,
+      reporter,
+    } = getGatsbyNodeHelperMocks();
 
-    createResolvers({ createResolvers: mockCreateResolvers }, options);
-    expect(mockCreateResolvers).toHaveBeenLastCalledWith({
-      [options.nodeType]: {
-        [options.name]: {
+    createResolvers(
+      {
+        actions,
+        store,
+        cache,
+        createNodeId,
+        createResolvers: mockCreateResolvers,
+        reporter,
+      },
+      pluginOptions
+    );
+
+    expect(mockCreateResolvers).toHaveBeenCalledTimes(1);
+    expect(mockCreateResolvers).toHaveBeenCalledWith({
+      [pluginOptions.nodeType]: {
+        [pluginOptions.imageFileField]: {
           type: 'File',
           resolve: expect.any(Function),
         },
@@ -101,8 +123,8 @@ describe('gatsby-plugin-remote-images', () => {
   });
 
   it('can use the `ext` option', async () => {
-    const node = {
-      ...baseNode,
+    const sourceNode = {
+      ...baseSourceNode,
       imageUrl: 'https://dummyimage.com/600x400/000/fff',
       internal: {
         contentDigest: 'testdigest',
@@ -110,55 +132,102 @@ describe('gatsby-plugin-remote-images', () => {
         mediaType: 'image/jpg',
       },
     };
-    const options = {
-      ...baseOptions,
+    const pluginOptions = {
+      ...basePluginOptions,
       ext: '.jpg',
     };
-    const { actions, createNodeId, store, cache } = getGatsbyNodeHelperMocks();
-
-    await onCreateNode({ node, actions, createNodeId, store, cache }, options);
-    expect(createNodeId).toHaveBeenCalledTimes(1);
-    expect(createRemoteFileNode).toHaveBeenLastCalledWith({
-      parentNodeId: 'testing',
-      url: node.imageUrl + options.ext,
-      ext: options.ext,
+    const {
+      actions,
+      createNodeId,
+      createResolvers: mockCreateResolvers,
       store,
       cache,
+      reporter,
+    } = getGatsbyNodeHelperMocks();
+
+    createResolvers(
+      {
+        actions,
+        store,
+        cache,
+        createNodeId,
+        createResolvers: mockCreateResolvers,
+        reporter,
+      },
+      pluginOptions
+    );
+
+    expect(mockCreateResolvers).toHaveBeenCalledTimes(1);
+    const fileNodeResolver =
+      mockCreateResolvers.mock.calls[0][0][pluginOptions.nodeType].localImage
+        .resolve;
+    await fileNodeResolver(sourceNode, null, mockContext);
+
+    expect(createNodeId).toHaveBeenCalledTimes(1);
+    expect(createRemoteFileNode).toHaveBeenCalledTimes(1);
+    expect(createRemoteFileNode).toHaveBeenCalledWith({
+      parentNodeId: 'testing',
+      url: sourceNode.imageUrl + pluginOptions.ext,
+      ext: pluginOptions.ext,
+      store,
+      cache,
+      reporter,
       createNode: actions.createNode,
       createNodeId,
       auth: {},
     });
   });
 
-  it('can have nested arrays in `imagePath`', async () => {
-    const node = {
-      ...baseNode,
-      nodes: [
-        {
-          id: 'nested parent',
-          imageUrl: 'https://dummyimage.com/600x400/000/fff.png',
-        },
-      ],
+  it('can use the `prepareUrl` option', async () => {
+    const sourceNode = {
+      ...baseSourceNode,
+      imageUrl: 'https://dummyimage.com/600x400/000/fff',
       internal: {
         contentDigest: 'testdigest',
         type: 'test',
-        mediaType: 'application/json',
+        mediaType: 'image/jpg',
       },
     };
-    const options = {
-      ...baseOptions,
-      imagePath: 'nodes[].imageUrl',
+    const pluginOptions = {
+      ...basePluginOptions,
+      prepareUrl: url => `${url}-prepared`,
     };
-    const { actions, createNodeId, store, cache } = getGatsbyNodeHelperMocks();
+    const {
+      actions,
+      createNodeId,
+      createResolvers: mockCreateResolvers,
+      store,
+      cache,
+      reporter,
+    } = getGatsbyNodeHelperMocks();
 
-    await onCreateNode({ node, actions, createNodeId, store, cache }, options);
+    createResolvers(
+      {
+        actions,
+        store,
+        cache,
+        createNodeId,
+        createResolvers: mockCreateResolvers,
+        reporter,
+      },
+      pluginOptions
+    );
+
+    expect(mockCreateResolvers).toHaveBeenCalledTimes(1);
+    const fileNodeResolver =
+      mockCreateResolvers.mock.calls[0][0][pluginOptions.nodeType].localImage
+        .resolve;
+    await fileNodeResolver(sourceNode, null, mockContext);
+
     expect(createNodeId).toHaveBeenCalledTimes(1);
-    expect(createRemoteFileNode).toHaveBeenLastCalledWith({
-      parentNodeId: 'nested parent',
-      url: node.nodes[0].imageUrl,
+    expect(createRemoteFileNode).toHaveBeenCalledTimes(1);
+    expect(createRemoteFileNode).toHaveBeenCalledWith({
+      parentNodeId: 'testing',
+      url: `${sourceNode.imageUrl}-prepared`,
       ext: null,
       store,
       cache,
+      reporter,
       createNode: actions.createNode,
       createNodeId,
       auth: {},

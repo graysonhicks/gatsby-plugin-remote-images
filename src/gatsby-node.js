@@ -1,6 +1,16 @@
 const { createRemoteFileNode } = require(`gatsby-source-filesystem`);
 const get = require('lodash/get');
 
+// This is used to associate the existing node (of user-specified type) with the
+// new File node created via createRemoteFileNode. The new File node will be
+// resolved dynamically through the Gatsby schema customization createResolvers
+// API and which File node gets resolved for a given node of the user-specified
+// type is determined by the IDs in this mapping. The keys are each an ID of the
+// parent node (of user-specified type) and the values are each the ID of the
+// new File node. The relationships are set in onCreateNode and read in
+// createResolvers.
+const fileNodeMap = new Map();
+
 exports.onCreateNode = async (
   { node, actions, store, cache, createNodeId },
   options
@@ -72,10 +82,10 @@ async function createImageNode(url, node, options) {
   } catch (e) {
     console.error('gatsby-plugin-remote-images ERROR:', e);
   }
-  // Adds a field `localImage` or custom name to the node
-  // ___NODE appendix tells Gatsby that this field will link to another node
+
+  // Store the mapping between the current node and the newly created File node
   if (fileNode) {
-    node[`${name}___NODE`] = fileNode.id;
+    fileNodeMap.set(node.id, fileNode.id);
   }
 }
 
@@ -113,3 +123,21 @@ async function createImageNodesInArrays(path, node, options) {
     : // otherwise, handle leaf node
       createImageNode(nextValue, nextNode, options);
 }
+
+exports.createResolvers = ({ createResolvers }, options) => {
+  const { nodeType, name = 'localImage' } = options;
+
+  const resolvers = {
+    [nodeType]: {
+      [name]: {
+        type: 'File',
+        resolve: (source, _, context) =>
+          context.nodeModel.getNodeById({
+            id: fileNodeMap.get(source.id),
+          }),
+      },
+    },
+  };
+
+  createResolvers(resolvers);
+};

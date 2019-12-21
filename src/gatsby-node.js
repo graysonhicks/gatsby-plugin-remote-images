@@ -1,17 +1,6 @@
 const { createRemoteFileNode } = require(`gatsby-source-filesystem`);
 const get = require('lodash/get');
 
-// This is used to associate the existing node (of user-specified type) with the
-// new File nodes created via createRemoteFileNode. The new File nodes will be
-// resolved dynamically through the Gatsby schema customization createResolvers
-// API and which File node gets resolved for each new field on a given node of
-// the user-specified type is determined by the contents of this mapping. The
-// keys are each an ID of the parent node (of user-specified type) and the
-// values are each a nested mapping of the new image File field name to the ID
-// of the new File node. The relationships are set in onCreateNode and read in
-// createResolvers.
-const fileNodeMap = {};
-
 exports.onCreateNode = async (
   { node, actions, store, cache, createNodeId },
   options
@@ -61,6 +50,11 @@ function getPath(node, path, ext = null) {
   return ext ? value + ext : value;
 }
 
+// Returns a unique cache key for a given node ID
+function getCacheKeyForNodeId(nodeId) {
+  return `gatsby-plugin-remote-images-${nodeId}`;
+}
+
 // Creates a file node and associates the parent node to its new child
 async function createImageNode(url, node, options) {
   const { name, imagePathSegments, prepareUrl, ...restOfOptions } = options;
@@ -86,10 +80,20 @@ async function createImageNode(url, node, options) {
 
   // Store the mapping between the current node and the newly created File node
   if (fileNode) {
-    fileNodeMap[node.id] = {
-      ...fileNodeMap[node.id],
+    // This associates the existing node (of user-specified type) with the new
+    // File nodes created via createRemoteFileNode. The new File nodes will be
+    // resolved dynamically through the Gatsby schema customization
+    // createResolvers API and which File node gets resolved for each new field
+    // on a given node of the user-specified type is determined by the contents
+    // of this mapping. The keys are based on the ID of the parent node (of
+    // user-specified type) and the values are each a nested mapping of the new
+    // image File field name to the ID of the new File node.
+    const cacheKey = getCacheKeyForNodeId(node.id);
+    const existingFileNodeMap = await options.cache.get(cacheKey);
+    await options.cache.set(cacheKey, {
+      ...existingFileNodeMap,
       [name]: fileNode.id,
-    };
+    });
   }
 }
 
@@ -128,17 +132,17 @@ async function createImageNodesInArrays(path, node, options) {
       createImageNode(nextValue, nextNode, options);
 }
 
-exports.createResolvers = ({ createResolvers }, options) => {
+exports.createResolvers = ({ cache, createResolvers }, options) => {
   const { nodeType, name = 'localImage' } = options;
 
   const resolvers = {
     [nodeType]: {
       [name]: {
         type: 'File',
-        resolve: (source, _, context) =>
-          context.nodeModel.getNodeById({
-            id: get(fileNodeMap, [source.id, name]),
-          }),
+        resolve: async (source, _, context) => {
+          const fileNodeMap = await cache.get(getCacheKeyForNodeId(source.id));
+          return context.nodeModel.getNodeById({ id: fileNodeMap[name] });
+        },
       },
     },
   };

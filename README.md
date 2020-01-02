@@ -115,7 +115,7 @@ If you don't control the API that you are hitting (many third party APIs return
 a field with a string to an absolute path for an image), this means those image
 aren't run through gatsby-image and you lose all of the benefits.
 
-To get the images and make them avabilable for the above example, follow the
+To get the images and make them available for the above example, follow the
 install instructions and your config should look like this:
 
 ```javascript
@@ -157,7 +157,7 @@ allMyNodes {
 
 Due to the way `gatsby-source-graphql` creates nodes, it is currently impossible
 for any transformer type plugin to traverse the data from that plugin.
-[Please read this issue for explanantion](https://github.com/gatsbyjs/gatsby/issues/8404).
+[Please read this issue for explanation](https://github.com/gatsbyjs/gatsby/issues/8404).
 As soon as that as fixed in `gatsby-source-graphql`, this plugin will be tested
 to make sure it works with it as well.
 
@@ -183,7 +183,7 @@ allMyNodes {
 }
 ```
 
-To get the images and make them avabilable for the above example, your config
+To get the images and make them available for the above example, your config
 should look like this:
 
 ```javascript

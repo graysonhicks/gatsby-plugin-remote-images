@@ -1,21 +1,14 @@
 jest.mock('gatsby-source-filesystem');
 
 const { createRemoteFileNode } = require('gatsby-source-filesystem');
-const { onCreateNode, createResolvers } = require(`../gatsby-node`);
+const { onCreateNode } = require(`../gatsby-node`);
 
 const getGatsbyNodeHelperMocks = () => ({
   actions: { createNode: jest.fn() },
   createNodeId: jest.fn().mockReturnValue('remoteFileIdHere'),
-  createResolvers: jest.fn(),
   store: {},
   cache: {},
 });
-
-const mockContext = {
-  nodeModel: {
-    getNodeById: jest.fn(),
-  },
-};
 
 describe('gatsby-plugin-remote-images', () => {
   const baseNode = {
@@ -33,74 +26,53 @@ describe('gatsby-plugin-remote-images', () => {
     imagePath: 'imageUrl',
   };
 
-  it('creates remote file node with defaults', async () => {
+  it('creates remote file node with defaults', () => {
     const node = {
       ...baseNode,
     };
     const options = {
       ...baseOptions,
     };
-    const {
-      actions,
-      createNodeId,
-      createResolvers: mockCreateResolvers,
-      store,
-      cache,
-    } = getGatsbyNodeHelperMocks();
+    const { actions, createNodeId, store, cache } = getGatsbyNodeHelperMocks();
 
-    await onCreateNode({ node, actions, createNodeId, store, cache }, options);
-    expect(createNodeId).toHaveBeenCalledTimes(1);
-    expect(createRemoteFileNode).toHaveBeenLastCalledWith({
-      parentNodeId: 'testing',
-      url: node.imageUrl,
-      ext: null,
-      store,
-      cache,
-      createNode: actions.createNode,
-      createNodeId,
-      auth: {},
-    });
-
-    createResolvers({ createResolvers: mockCreateResolvers }, options);
-    expect(mockCreateResolvers).toHaveBeenCalledTimes(1);
-    expect(mockCreateResolvers).toHaveBeenLastCalledWith({
-      [options.nodeType]: {
-        localImage: {
-          type: 'File',
-          resolve: expect.any(Function),
-        },
-      },
-    });
-
-    mockContext.nodeModel.getNodeById.mockResolvedValueOnce({
-      id: 'newFileNode',
-    });
-    const fileNodeResolver =
-      mockCreateResolvers.mock.calls[0][0][options.nodeType].localImage.resolve;
-    expect(fileNodeResolver(baseNode, null, mockContext)).resolves.toEqual({
-      id: 'newFileNode',
+    return onCreateNode(
+      { node, actions, createNodeId, store, cache },
+      options
+    ).then(() => {
+      expect(createNodeId).toHaveBeenCalledTimes(1);
+      expect(createRemoteFileNode).toHaveBeenLastCalledWith({
+        parentNodeId: 'testing',
+        url: node.imageUrl,
+        ext: null,
+        store,
+        cache,
+        createNode: actions.createNode,
+        createNodeId,
+        auth: {},
+      });
+      expect(node['localImage___NODE']).toBe('remoteFileIdHere');
     });
   });
 
   it('can use the `name` option', () => {
+    const node = {
+      ...baseNode,
+    };
     const options = {
       ...baseOptions,
       name: 'myNewField',
     };
-    const { createResolvers: mockCreateResolvers } = getGatsbyNodeHelperMocks();
+    const { actions, createNodeId, store, cache } = getGatsbyNodeHelperMocks();
 
-    createResolvers({ createResolvers: mockCreateResolvers }, options);
-    expect(mockCreateResolvers).toHaveBeenLastCalledWith({
-      [options.nodeType]: {
-        [options.name]: {
-          type: 'File',
-          resolve: expect.any(Function),
-        },
-      },
+    return onCreateNode(
+      { node, actions, createNodeId, store, cache },
+      options
+    ).then(() => {
+      expect(node[`${options.name}___NODE`]).toBe('remoteFileIdHere');
     });
   });
 
-  it('can use the `ext` option', async () => {
+  it('can use the `ext` option', () => {
     const node = {
       ...baseNode,
       imageUrl: 'https://dummyimage.com/600x400/000/fff',
@@ -116,21 +88,26 @@ describe('gatsby-plugin-remote-images', () => {
     };
     const { actions, createNodeId, store, cache } = getGatsbyNodeHelperMocks();
 
-    await onCreateNode({ node, actions, createNodeId, store, cache }, options);
-    expect(createNodeId).toHaveBeenCalledTimes(1);
-    expect(createRemoteFileNode).toHaveBeenLastCalledWith({
-      parentNodeId: 'testing',
-      url: node.imageUrl + options.ext,
-      ext: options.ext,
-      store,
-      cache,
-      createNode: actions.createNode,
-      createNodeId,
-      auth: {},
+    return onCreateNode(
+      { node, actions, createNodeId, store, cache },
+      options
+    ).then(() => {
+      expect(createNodeId).toHaveBeenCalledTimes(1);
+      expect(createRemoteFileNode).toHaveBeenLastCalledWith({
+        parentNodeId: 'testing',
+        url: node.imageUrl + options.ext,
+        ext: options.ext,
+        store,
+        cache,
+        createNode: actions.createNode,
+        createNodeId,
+        auth: {},
+      });
+      expect(node['localImage___NODE']).toBe('remoteFileIdHere');
     });
   });
 
-  it('can have nested arrays in `imagePath`', async () => {
+  it('can have nested arrays in `imagePath`', () => {
     const node = {
       ...baseNode,
       nodes: [
@@ -151,17 +128,22 @@ describe('gatsby-plugin-remote-images', () => {
     };
     const { actions, createNodeId, store, cache } = getGatsbyNodeHelperMocks();
 
-    await onCreateNode({ node, actions, createNodeId, store, cache }, options);
-    expect(createNodeId).toHaveBeenCalledTimes(1);
-    expect(createRemoteFileNode).toHaveBeenLastCalledWith({
-      parentNodeId: 'nested parent',
-      url: node.nodes[0].imageUrl,
-      ext: null,
-      store,
-      cache,
-      createNode: actions.createNode,
-      createNodeId,
-      auth: {},
+    return onCreateNode(
+      { node, actions, createNodeId, store, cache },
+      options
+    ).then(() => {
+      expect(createNodeId).toHaveBeenCalledTimes(1);
+      expect(createRemoteFileNode).toHaveBeenLastCalledWith({
+        parentNodeId: 'nested parent',
+        url: node.nodes[0].imageUrl,
+        ext: null,
+        store,
+        cache,
+        createNode: actions.createNode,
+        createNodeId,
+        auth: {},
+      });
+      expect(node.nodes[0]['localImage___NODE']).toBe('remoteFileIdHere');
     });
   });
 });

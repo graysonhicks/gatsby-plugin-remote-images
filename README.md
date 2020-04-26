@@ -1,4 +1,4 @@
-# :floppy_disk: gatsby-plugin-remote-images
+# 💾 gatsby-plugin-remote-images
 
 Download images from any string field on another node so that those images can
 be queried with `gatsby-image`.

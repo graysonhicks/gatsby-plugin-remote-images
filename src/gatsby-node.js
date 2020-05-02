@@ -73,28 +73,30 @@ async function createImageNodes(urls, node, options) {
     return;
   }
 
-  const fileNodes = urls
-    .map(async (url, index) => {
-      if (typeof prepareUrl === 'function') {
-        url = prepareUrl({
-          url,
-          node,
-          index,
-        });
-      }
+  const fileNodes = (
+    await Promise.all(
+      urls.map(async (url, index) => {
+        if (typeof prepareUrl === 'function') {
+          url = prepareUrl({
+            url,
+            node,
+            index,
+          });
+        }
 
-      try {
-        fileNode = await createRemoteFileNode({
-          ...restOfOptions,
-          url,
-          parentNodeId: node.id,
-        });
-      } catch (e) {
-        console.error('gatsby-plugin-remote-images ERROR:', e);
-      }
-      return fileNode;
-    })
-    .filter(fileNode => !!fileNode);
+        try {
+          fileNode = await createRemoteFileNode({
+            ...restOfOptions,
+            url,
+            parentNodeId: node.id,
+          });
+        } catch (e) {
+          console.error('gatsby-plugin-remote-images ERROR:', e);
+        }
+        return fileNode;
+      })
+    )
+  ).filter(fileNode => !!fileNode);
 
   // Store the mapping between the current node and the newly created File node
   if (fileNodes.length) {

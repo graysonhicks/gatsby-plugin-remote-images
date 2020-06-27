@@ -22,7 +22,7 @@ module.exports = {
     {
       resolve: `gatsby-plugin-remote-images`,
       options: {
-        nodeType: 'myNodes',
+        nodeType: 'MyNodes',
         imagePath: 'path.to.image',
       },
     },
@@ -41,7 +41,7 @@ module.exports = {
         // The node type that has the images you want to grab.
         // This is generally the camelcased version of the word
         // after the 'all' in GraphQL ie. allMyImages type is myImages
-        nodeType: 'myNodes',
+        nodeType: 'MyNodes',
         // For simple object traversal, this is the string path to the image you
         // want to use, relative to the node.
         // This uses lodash .get, see [docs for accepted formats here](https://lodash.com/docs/4.17.11#get).
@@ -124,7 +124,7 @@ module.exports = {
     {
       resolve: `gatsby-plugin-remote-images`,
       options: {
-        nodeType: 'myNodes',
+        nodeType: 'MyNodes',
         imagePath: 'imageUrl',
         // OPTIONAL: Name you want to give new image field on the node.
         // Defaults to 'localImage'.
@@ -192,7 +192,7 @@ module.exports = {
     {
       resolve: `gatsby-plugin-remote-images`,
       options: {
-        nodeType: 'myNodes',
+        nodeType: 'MyNodes',
         imagePath: 'nodes[].imageUrl',
       },
     },

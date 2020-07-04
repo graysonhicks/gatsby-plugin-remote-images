@@ -77,11 +77,7 @@ async function createImageNodes(urls, node, options) {
     await Promise.all(
       urls.map(async (url, index) => {
         if (typeof prepareUrl === 'function') {
-          url = prepareUrl({
-            url,
-            node,
-            index,
-          });
+          url = prepareUrl(url);
         }
 
         try {
@@ -127,7 +123,7 @@ async function createImageNode(url, node, options) {
   }
 
   if (typeof prepareUrl === 'function') {
-    url = prepareUrl({ url, node });
+    url = prepareUrl(url);
   }
 
   try {

@@ -1,6 +1,5 @@
 const { createRemoteFileNode } = require(`gatsby-source-filesystem`);
 const get = require('lodash/get');
-const isArray = require('lodash/isArray');
 
 exports.onCreateNode = async (
   { node, actions, store, cache, createNodeId },

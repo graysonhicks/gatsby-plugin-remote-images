@@ -1,5 +1,34 @@
 const { createRemoteFileNode } = require(`gatsby-source-filesystem`);
+const { GraphQLInt, GraphQLString } = require('gatsby/graphql');
 const get = require('lodash/get');
+
+exports.setFieldsOnGraphQLNodeType = ({ type }, options) => {
+  if (type.name === options.name) {
+    return {
+      [options.name]: {
+        type: `File`,
+        args: {
+          width: {
+            type: GraphQLInt,
+          },
+          format: {
+            type: ImageFormatType,
+          },
+          height: {
+            type: GraphQLInt,
+          },
+          fit: {
+            type: GraphQLString,
+            defaultValue: 'crop',
+          },
+        },
+      },
+    };
+  }
+
+  // by default return empty object
+  return {};
+};
 
 exports.onCreateNode = async (
   { node, actions, store, cache, createNodeId, reporter },

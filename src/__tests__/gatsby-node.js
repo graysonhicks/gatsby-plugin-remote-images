@@ -7,6 +7,12 @@ const getGatsbyNodeHelperMocks = () => ({
   actions: { createNode: jest.fn() },
   createNodeId: jest.fn().mockReturnValue('remoteFileIdHere'),
   createResolvers: jest.fn(),
+  reporter: {
+    activityTimer: jest.fn().mockReturnValue({
+      start: jest.fn(),
+      end: jest.fn(),
+    }),
+  },
   store: {},
   cache: {
     get: jest.fn().mockReturnValue({
@@ -53,9 +59,13 @@ describe('gatsby-plugin-remote-images', () => {
       createResolvers: mockCreateResolvers,
       store,
       cache,
+      reporter,
     } = getGatsbyNodeHelperMocks();
 
-    await onCreateNode({ node, actions, createNodeId, store, cache }, options);
+    await onCreateNode(
+      { node, actions, createNodeId, store, cache, reporter },
+      options
+    );
     expect(createNodeId).toHaveBeenCalledTimes(1);
     expect(createRemoteFileNode).toHaveBeenLastCalledWith({
       parentNodeId: 'testing',
@@ -122,9 +132,18 @@ describe('gatsby-plugin-remote-images', () => {
       ...baseOptions,
       ext: '.jpg',
     };
-    const { actions, createNodeId, store, cache } = getGatsbyNodeHelperMocks();
+    const {
+      actions,
+      createNodeId,
+      store,
+      cache,
+      reporter,
+    } = getGatsbyNodeHelperMocks();
 
-    await onCreateNode({ node, actions, createNodeId, store, cache }, options);
+    await onCreateNode(
+      { node, actions, createNodeId, store, cache, reporter },
+      options
+    );
     expect(createNodeId).toHaveBeenCalledTimes(1);
     expect(createRemoteFileNode).toHaveBeenLastCalledWith({
       parentNodeId: 'testing',
@@ -157,13 +176,113 @@ describe('gatsby-plugin-remote-images', () => {
       ...baseOptions,
       imagePath: 'nodes[].imageUrl',
     };
-    const { actions, createNodeId, store, cache } = getGatsbyNodeHelperMocks();
+    const {
+      actions,
+      createNodeId,
+      store,
+      cache,
+      reporter,
+    } = getGatsbyNodeHelperMocks();
 
-    await onCreateNode({ node, actions, createNodeId, store, cache }, options);
+    await onCreateNode(
+      { node, actions, createNodeId, store, cache, reporter },
+      options
+    );
     expect(createNodeId).toHaveBeenCalledTimes(1);
     expect(createRemoteFileNode).toHaveBeenLastCalledWith({
       parentNodeId: 'nested parent',
       url: node.nodes[0].imageUrl,
+      ext: null,
+      store,
+      cache,
+      createNode: actions.createNode,
+      createNodeId,
+      auth: {},
+    });
+  });
+
+  it('can have arrays at the leaf nodes', async () => {
+    const node = {
+      ...baseNode,
+      imageUrls: [
+        'https://dummyimage.com/600x400/000/fff.png',
+        'https://dummyimage.com/600x400/000/fff.png',
+      ],
+      internal: {
+        contentDigest: 'testdigest',
+        type: 'test',
+        mediaType: 'application/json',
+      },
+    };
+    const options = {
+      ...baseOptions,
+      imagePath: 'imageUrls',
+      type: 'array',
+    };
+    const {
+      actions,
+      createNodeId,
+      store,
+      cache,
+      reporter,
+    } = getGatsbyNodeHelperMocks();
+
+    await onCreateNode(
+      { node, actions, createNodeId, store, cache, reporter },
+      options
+    );
+    expect(createNodeId).toHaveBeenCalledTimes(2);
+    expect(createRemoteFileNode).toHaveBeenLastCalledWith({
+      parentNodeId: 'testing',
+      url: node.imageUrls[1],
+      ext: null,
+      store,
+      cache,
+      createNode: actions.createNode,
+      createNodeId,
+      auth: {},
+    });
+  });
+
+  it('can have nested arrays in `imagePath` AND an array at the leaf node', async () => {
+    const node = {
+      ...baseNode,
+      nodes: [
+        {
+          id: 'nested parent',
+          imageUrls: [
+            'https://dummyimage.com/600x400/000/fff.png',
+            'https://dummyimage.com/600x400/000/fff.png',
+          ],
+        },
+      ],
+      internal: {
+        contentDigest: 'testdigest',
+        type: 'test',
+        mediaType: 'application/json',
+      },
+    };
+    const options = {
+      ...baseOptions,
+      imagePath: 'nodes[].imageUrls',
+      type: 'array',
+    };
+    const {
+      actions,
+      createNodeId,
+      store,
+      cache,
+      reporter,
+    } = getGatsbyNodeHelperMocks();
+
+    await onCreateNode(
+      { node, actions, createNodeId, store, cache, reporter },
+      options
+    );
+    expect(createNodeId).toHaveBeenCalledTimes(2);
+    expect(createRemoteFileNode).toHaveBeenLastCalledWith({
+      parentNodeId: 'nested parent',
+      url: node.nodes[0].imageUrls[1],
       ext: null,
       store,
       cache,

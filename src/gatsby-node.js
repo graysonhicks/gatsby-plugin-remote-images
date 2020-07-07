@@ -179,6 +179,8 @@ async function createImageNodesInArrays(path, node, options) {
       .join('.');
     nextNode = get(node, pathToLastParent);
   }
+  // @TODO: Need logic to handle if the leaf node is an array to then shift
+  // to the function of createImageNodes.
   return Array.isArray(nextValue)
     ? // Recursively call function with next path segment for each array element
       Promise.all(

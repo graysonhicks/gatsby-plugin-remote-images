@@ -68,7 +68,7 @@ describe('gatsby-plugin-remote-images', () => {
     );
     expect(createNodeId).toHaveBeenCalledTimes(1);
     expect(createRemoteFileNode).toHaveBeenLastCalledWith({
-      parentNodeId: 'testing',
+      parentNodeId: baseNode.id,
       url: node.imageUrl,
       ext: null,
       store,
@@ -146,7 +146,7 @@ describe('gatsby-plugin-remote-images', () => {
     );
     expect(createNodeId).toHaveBeenCalledTimes(1);
     expect(createRemoteFileNode).toHaveBeenLastCalledWith({
-      parentNodeId: 'testing',
+      parentNodeId: baseNode.id,
       url: node.imageUrl + options.ext,
       ext: options.ext,
       store,
@@ -190,7 +190,7 @@ describe('gatsby-plugin-remote-images', () => {
     );
     expect(createNodeId).toHaveBeenCalledTimes(1);
     expect(createRemoteFileNode).toHaveBeenLastCalledWith({
-      parentNodeId: 'nested parent',
+      parentNodeId: baseNode.id,
       url: node.nodes[0].imageUrl,
       ext: null,
       store,
@@ -233,7 +233,7 @@ describe('gatsby-plugin-remote-images', () => {
     );
     expect(createNodeId).toHaveBeenCalledTimes(2);
     expect(createRemoteFileNode).toHaveBeenLastCalledWith({
-      parentNodeId: 'testing',
+      parentNodeId: baseNode.id,
       url: node.imageUrls[1],
       ext: null,
       store,
@@ -281,7 +281,7 @@ describe('gatsby-plugin-remote-images', () => {
     );
     expect(createNodeId).toHaveBeenCalledTimes(2);
     expect(createRemoteFileNode).toHaveBeenLastCalledWith({
-      parentNodeId: 'nested parent',
+      parentNodeId: baseNode.id,
       url: node.nodes[0].imageUrls[1],
       ext: null,
       store,
@@ -289,6 +289,153 @@ describe('gatsby-plugin-remote-images', () => {
       createNode: actions.createNode,
       createNodeId,
       auth: {},
+    });
+  });
+
+  it('can have nested arrays in `imagePath` with multiple elements in array', async () => {
+    const node = {
+      ...baseNode,
+      nodes: [
+        {
+          id: 'nested parent',
+          imageUrl: 'https://dummyimage.com/600x400/000/fff.png',
+        },
+        {
+          id: 'another',
+          imageUrl: 'https://dummyimage.com/600x400/000/ddd.png',
+        },
+      ],
+      internal: {
+        contentDigest: 'testdigest',
+        type: 'test',
+        mediaType: 'application/json',
+      },
+    };
+    const options = {
+      ...baseOptions,
+      imagePath: 'nodes[].imageUrl',
+    };
+    const {
+      actions,
+      createNodeId,
+      store,
+      cache,
+      reporter,
+    } = getGatsbyNodeHelperMocks();
+
+    await onCreateNode(
+      { node, actions, createNodeId, store, cache, reporter },
+      options
+    );
+    expect(createNodeId).toHaveBeenCalledTimes(2);
+    expect(createRemoteFileNode).toHaveBeenLastCalledWith({
+      parentNodeId: baseNode.id,
+      url: node.nodes[1].imageUrl,
+      ext: null,
+      store,
+      cache,
+      createNode: actions.createNode,
+      createNodeId,
+      auth: {},
+    });
+    expect(cache.set).toHaveBeenCalledTimes(1);
+  });
+
+  it('can have multiple path levels', async () => {
+    const node = {
+      ...baseNode,
+      ancestor: {
+        nodes: [
+          {
+            id: 'nested parent',
+            imageUrl: 'https://dummyimage.com/600x400/000/fff.png',
+          },
+          {
+            id: 'another',
+            imageUrl: 'https://dummyimage.com/600x400/000/ddd.png',
+          },
+        ],
+      },
+      internal: {
+        contentDigest: 'testdigest',
+        type: 'test',
+        mediaType: 'application/json',
+      },
+    };
+    const options = {
+      ...baseOptions,
+      imagePath: 'ancestor.nodes[].imageUrl',
+    };
+    const {
+      actions,
+      createNodeId,
+      store,
+      cache,
+      reporter,
+    } = getGatsbyNodeHelperMocks();
+
+    await onCreateNode(
+      { node, actions, createNodeId, store, cache, reporter },
+      options
+    );
+    expect(createNodeId).toHaveBeenCalledTimes(2);
+    expect(createRemoteFileNode).toHaveBeenLastCalledWith({
+      parentNodeId: baseNode.id,
+      url: node.ancestor.nodes[1].imageUrl,
+      ext: null,
+      store,
+      cache,
+      createNode: actions.createNode,
+      createNodeId,
+      auth: {},
+    });
+    expect(cache.set).toHaveBeenCalledTimes(1);
+  });
+
+  it('creates remote files node with defaults when an array is in path', async () => {
+    const node = {
+      ...baseNode,
+      ancestor: {
+        nodes: [
+          {
+            id: 'nested parent',
+            imageUrl: 'https://dummyimage.com/600x400/000/fff.png',
+          },
+          {
+            id: 'another',
+            imageUrl: 'https://dummyimage.com/600x400/000/ddd.png',
+          },
+        ],
+      },
+    };
+    const options = {
+      ...baseOptions,
+      imagePath: 'ancestor.nodes[].imageUrl',
+    };
+    const {
+      actions,
+      createNodeId,
+      createResolvers: mockCreateResolvers,
+      store,
+      cache,
+      reporter,
+    } = getGatsbyNodeHelperMocks();
+
+    await onCreateNode(
+      { node, actions, createNodeId, store, cache, reporter },
+      options
+    );
+    expect(createNodeId).toHaveBeenCalledTimes(2);
+
+    createResolvers({ cache, createResolvers: mockCreateResolvers }, options);
+    expect(mockCreateResolvers).toHaveBeenCalledTimes(1);
+    expect(mockCreateResolvers).toHaveBeenLastCalledWith({
+      [options.nodeType]: {
+        localImage: {
+          type: '[File]',
+          resolve: expect.any(Function),
+        },
+      },
     });
   });
 });

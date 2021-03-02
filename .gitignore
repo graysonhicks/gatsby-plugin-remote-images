@@ -1,5 +1,6 @@
 /*.js
 !index.js
+!gatsby-node.js
 node_modules/
 package-lock.json
 .vscode

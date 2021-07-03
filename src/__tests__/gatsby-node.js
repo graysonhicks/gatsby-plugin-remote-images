@@ -7,6 +7,7 @@ const getGatsbyNodeHelperMocks = () => ({
   actions: { createNode: jest.fn() },
   createNodeId: jest.fn().mockReturnValue('remoteFileIdHere'),
   createResolvers: jest.fn(),
+  createContentDigest: jest.fn(),
   reporter: {
     activityTimer: jest.fn().mockReturnValue({
       start: jest.fn(),
@@ -437,5 +438,88 @@ describe('gatsby-plugin-remote-images', () => {
         },
       },
     });
+  });
+
+  it("should create file node when url is falsy(null, '', undefined)", async () => {
+    createRemoteFileNode.mockRejectedValue('Invalid url');
+
+    const nodes = [
+      {
+        id: 'empty string',
+        imageUrl: '',
+        internal: {
+          contentDigest: 'testdigest',
+          type: 'test',
+          mediaType: 'application/json',
+        },
+      },
+      {
+        id: 'null',
+        imageUrl: null,
+        internal: {
+          contentDigest: 'testdigest',
+          type: 'test',
+          mediaType: 'application/json',
+        },
+      },
+      {
+        id: 'undefined',
+        imageUrl: undefined,
+        internal: {
+          contentDigest: 'testdigest',
+          type: 'test',
+          mediaType: 'application/json',
+        },
+      },
+    ];
+    const options = {
+      ...baseOptions,
+      imagePath: 'imageUrl',
+    };
+    const {
+      actions,
+      createNodeId,
+      store,
+      cache,
+      reporter,
+      createContentDigest,
+    } = getGatsbyNodeHelperMocks();
+
+    for (const node of nodes) {
+      createNodeId.mockClear();
+      await onCreateNode(
+        {
+          node,
+          actions,
+          createNodeId,
+          createContentDigest,
+          store,
+          cache,
+          reporter,
+        },
+        options
+      );
+      expect(createNodeId).toHaveBeenCalledTimes(1);
+      expect(createRemoteFileNode).toHaveBeenLastCalledWith({
+        parentNodeId: node.id,
+        url: node.imageUrl,
+        ext: null,
+        store,
+        cache,
+        createNode: actions.createNode,
+        createContentDigest,
+        createNodeId,
+        auth: {},
+      });
+      expect(actions.createNode).toHaveBeenLastCalledWith(
+        expect.objectContaining({
+          internal: expect.objectContaining({
+            type: 'File',
+            mediaType: 'application/octet-stream',
+          }),
+        }),
+        { name: 'gatsby-source-filesystem' }
+      );
+    }
   });
 });

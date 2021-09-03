@@ -32,22 +32,19 @@ exports.onCreateNode = async (
     if (imagePath.includes('[].')) {
       imagePathSegments = imagePath.split('[].');
     }
-    const downloadingFilesActivity = reporter.activityTimer(
-      `Creating local images for ${nodeType}`
-    );
-    downloadingFilesActivity.start();
+
     if (imagePathSegments.length) {
       const urls = await getAllFilesUrls(imagePathSegments[0], node, {
         imagePathSegments,
         ...createImageNodeOptions,
       });
-      await createImageNodes(urls, node, createImageNodeOptions);
+      await createImageNodes(urls, node, createImageNodeOptions, reporter);
     } else if (type === 'array') {
       const urls = getPaths(node, imagePath, ext);
-      await createImageNodes(urls, node, createImageNodeOptions);
+      await createImageNodes(urls, node, createImageNodeOptions, reporter);
     } else {
       const url = getPath(node, imagePath, ext);
-      await createImageNode(url, node, createImageNodeOptions);
+      await createImageNode(url, node, createImageNodeOptions, reporter);
     }
     downloadingFilesActivity.end();
   }
@@ -72,7 +69,7 @@ function getCacheKeyForNodeId(nodeId) {
   return `gatsby-plugin-remote-images-${nodeId}`;
 }
 
-async function createImageNodes(urls, node, options) {
+async function createImageNodes(urls, node, options, reporter) {
   const { name, imagePathSegments, prepareUrl, ...restOfOptions } = options;
   let fileNode;
 
@@ -92,8 +89,9 @@ async function createImageNodes(urls, node, options) {
             url,
             parentNodeId: node.id,
           });
+          reporter.verbose(`Created image from ${url}`)
         } catch (e) {
-          console.error('gatsby-plugin-remote-images ERROR:', e);
+          reporter.error(`gatsby-plugin-remote-images ERROR:`, new Error(e))
         }
         return fileNode;
       })
@@ -120,7 +118,7 @@ async function createImageNodes(urls, node, options) {
 }
 
 // Creates a file node and associates the parent node to its new child
-async function createImageNode(url, node, options) {
+async function createImageNode(url, node, options, reporter) {
   const { name, imagePathSegments, prepareUrl, ...restOfOptions } = options;
   let fileNode;
 
@@ -138,8 +136,9 @@ async function createImageNode(url, node, options) {
       url,
       parentNodeId: node.id,
     });
+    reporter.verbose(`Created image from ${url}`)
   } catch (e) {
-    console.error('gatsby-plugin-remote-images ERROR:', e);
+    reporter.error(`gatsby-plugin-remote-images ERROR:`, new Error(e))
   }
 
   // Store the mapping between the current node and the newly created File node

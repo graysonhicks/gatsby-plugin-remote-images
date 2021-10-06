@@ -46,7 +46,6 @@ exports.onCreateNode = async (
       const url = getPath(node, imagePath, ext);
       await createImageNode(url, node, createImageNodeOptions, reporter);
     }
-    downloadingFilesActivity.end();
   }
 };
 
@@ -89,9 +88,9 @@ async function createImageNodes(urls, node, options, reporter) {
             url,
             parentNodeId: node.id,
           });
-          reporter.verbose(`Created image from ${url}`)
+          reporter.verbose(`Created image from ${url}`);
         } catch (e) {
-          reporter.error(`gatsby-plugin-remote-images ERROR:`, new Error(e))
+          reporter.error(`gatsby-plugin-remote-images ERROR:`, new Error(e));
         }
         return fileNode;
       })
@@ -136,9 +135,9 @@ async function createImageNode(url, node, options, reporter) {
       url,
       parentNodeId: node.id,
     });
-    reporter.verbose(`Created image from ${url}`)
+    reporter.verbose(`Created image from ${url}`);
   } catch (e) {
-    reporter.error(`gatsby-plugin-remote-images ERROR:`, new Error(e))
+    reporter.error(`gatsby-plugin-remote-images ERROR:`, new Error(e));
   }
 
   // Store the mapping between the current node and the newly created File node

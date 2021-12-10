@@ -1,6 +1,10 @@
 const { createRemoteFileNode } = require(`gatsby-source-filesystem`);
 const get = require('lodash/get');
 
+const STALL_RETRY_LIMIT = process.env.GATSBY_STALL_RETRY_LIMIT
+  ? parseInt(process.env.GATSBY_STALL_RETRY_LIMIT, 10)
+  : 1;
+
 exports.onCreateNode = async (
   { node, actions, store, cache, createNodeId, reporter },
   options
@@ -68,9 +72,38 @@ function getCacheKeyForNodeId(nodeId) {
   return `gatsby-plugin-remote-images-${nodeId}`;
 }
 
-async function createImageNodes(urls, node, options, reporter) {
-  const { name, imagePathSegments, prepareUrl, ...restOfOptions } = options;
+async function createRemoteImageNode(
+  url,
+  node,
+  options,
+  reporter,
+  attempt = 1
+) {
   let fileNode;
+  const { prepareUrl } = options;
+  if (typeof prepareUrl === 'function') {
+    url = prepareUrl(url);
+  }
+
+  try {
+    fileNode = await createRemoteFileNode({
+      ...options,
+      url,
+      parentNodeId: node.id,
+    });
+    reporter.verbose(`Created image from ${url}`);
+  } catch (e) {
+    if (attempt < STALL_RETRY_LIMIT) {
+      createRemoteImageNode(url, node, options, reporter, attempt + 1);
+    } else {
+      reporter.error(`gatsby-plugin-remote-images ERROR:`, new Error(e));
+    }
+  }
+  return fileNode;
+}
+
+async function createImageNodes(urls, node, options, reporter) {
+  const { name } = options;
 
   if (!urls) {
     return;
@@ -78,22 +111,10 @@ async function createImageNodes(urls, node, options, reporter) {
 
   const fileNodes = (
     await Promise.all(
-      urls.map(async (url, index) => {
-        if (typeof prepareUrl === 'function') {
-          url = prepareUrl(url);
-        }
-        try {
-          fileNode = await createRemoteFileNode({
-            ...restOfOptions,
-            url,
-            parentNodeId: node.id,
-          });
-          reporter.verbose(`Created image from ${url}`);
-        } catch (e) {
-          reporter.error(`gatsby-plugin-remote-images ERROR:`, new Error(e));
-        }
-        return fileNode;
-      })
+      urls.map(
+        async (url, index) =>
+          await createRemoteImageNode(url, node, options, reporter)
+      )
     )
   ).filter(fileNode => !!fileNode);
 
@@ -118,27 +139,13 @@ async function createImageNodes(urls, node, options, reporter) {
 
 // Creates a file node and associates the parent node to its new child
 async function createImageNode(url, node, options, reporter) {
-  const { name, imagePathSegments, prepareUrl, ...restOfOptions } = options;
-  let fileNode;
+  const { name, imagePathSegments, prepareUrl } = options;
 
   if (!url) {
     return;
   }
 
-  if (typeof prepareUrl === 'function') {
-    url = prepareUrl(url);
-  }
-
-  try {
-    fileNode = await createRemoteFileNode({
-      ...restOfOptions,
-      url,
-      parentNodeId: node.id,
-    });
-    reporter.verbose(`Created image from ${url}`);
-  } catch (e) {
-    reporter.error(`gatsby-plugin-remote-images ERROR:`, new Error(e));
-  }
+  const fileNode = createRemoteImageNode(url, node, options, reporter);
 
   // Store the mapping between the current node and the newly created File node
   if (fileNode) {

@@ -48,6 +48,23 @@ describe('gatsby-plugin-remote-images', () => {
     imagePath: 'imageUrl',
   };
 
+  const createRemoteFileNodeMock = ({
+    store,
+    cache,
+    actions,
+    createNodeId,
+  }) => ({
+    parentNodeId: baseNode.id,
+    ext: null,
+    store,
+    cache,
+    createNode: actions.createNode,
+    createNodeId,
+    auth: {},
+    name: 'localImage',
+    prepareUrl: null,
+  });
+
   it('creates remote file node with defaults', async () => {
     const node = {
       ...baseNode,
@@ -55,6 +72,7 @@ describe('gatsby-plugin-remote-images', () => {
     const options = {
       ...baseOptions,
     };
+
     const {
       actions,
       createNodeId,
@@ -70,14 +88,8 @@ describe('gatsby-plugin-remote-images', () => {
     );
     expect(createNodeId).toHaveBeenCalledTimes(1);
     expect(createRemoteFileNode).toHaveBeenLastCalledWith({
-      parentNodeId: baseNode.id,
+      ...createRemoteFileNodeMock({ store, cache, createNodeId, actions }),
       url: node.imageUrl,
-      ext: null,
-      store,
-      cache,
-      createNode: actions.createNode,
-      createNodeId,
-      auth: {},
     });
 
     createResolvers({ cache, createResolvers: mockCreateResolvers }, options);
@@ -134,6 +146,7 @@ describe('gatsby-plugin-remote-images', () => {
       ...baseOptions,
       ext: '.jpg',
     };
+
     const {
       actions,
       createNodeId,
@@ -148,14 +161,9 @@ describe('gatsby-plugin-remote-images', () => {
     );
     expect(createNodeId).toHaveBeenCalledTimes(1);
     expect(createRemoteFileNode).toHaveBeenLastCalledWith({
-      parentNodeId: baseNode.id,
+      ...createRemoteFileNodeMock({ store, cache, createNodeId, actions }),
       url: node.imageUrl + options.ext,
       ext: options.ext,
-      store,
-      cache,
-      createNode: actions.createNode,
-      createNodeId,
-      auth: {},
     });
   });
 
@@ -178,6 +186,7 @@ describe('gatsby-plugin-remote-images', () => {
       ...baseOptions,
       imagePath: 'nodes[].imageUrl',
     };
+
     const {
       actions,
       createNodeId,
@@ -192,14 +201,8 @@ describe('gatsby-plugin-remote-images', () => {
     );
     expect(createNodeId).toHaveBeenCalledTimes(1);
     expect(createRemoteFileNode).toHaveBeenLastCalledWith({
-      parentNodeId: baseNode.id,
+      ...createRemoteFileNodeMock({ store, cache, createNodeId, actions }),
       url: node.nodes[0].imageUrl,
-      ext: null,
-      store,
-      cache,
-      createNode: actions.createNode,
-      createNodeId,
-      auth: {},
     });
   });
 
@@ -221,6 +224,7 @@ describe('gatsby-plugin-remote-images', () => {
       imagePath: 'imageUrls',
       type: 'array',
     };
+
     const {
       actions,
       createNodeId,
@@ -235,14 +239,8 @@ describe('gatsby-plugin-remote-images', () => {
     );
     expect(createNodeId).toHaveBeenCalledTimes(2);
     expect(createRemoteFileNode).toHaveBeenLastCalledWith({
-      parentNodeId: baseNode.id,
+      ...createRemoteFileNodeMock({ store, cache, createNodeId, actions }),
       url: node.imageUrls[1],
-      ext: null,
-      store,
-      cache,
-      createNode: actions.createNode,
-      createNodeId,
-      auth: {},
     });
   });
 
@@ -269,6 +267,7 @@ describe('gatsby-plugin-remote-images', () => {
       imagePath: 'nodes[].imageUrls',
       type: 'array',
     };
+
     const {
       actions,
       createNodeId,
@@ -283,14 +282,8 @@ describe('gatsby-plugin-remote-images', () => {
     );
     expect(createNodeId).toHaveBeenCalledTimes(2);
     expect(createRemoteFileNode).toHaveBeenLastCalledWith({
-      parentNodeId: baseNode.id,
+      ...createRemoteFileNodeMock({ store, cache, createNodeId, actions }),
       url: node.nodes[0].imageUrls[1],
-      ext: null,
-      store,
-      cache,
-      createNode: actions.createNode,
-      createNodeId,
-      auth: {},
     });
   });
 
@@ -317,6 +310,7 @@ describe('gatsby-plugin-remote-images', () => {
       ...baseOptions,
       imagePath: 'nodes[].imageUrl',
     };
+
     const {
       actions,
       createNodeId,
@@ -331,14 +325,8 @@ describe('gatsby-plugin-remote-images', () => {
     );
     expect(createNodeId).toHaveBeenCalledTimes(2);
     expect(createRemoteFileNode).toHaveBeenLastCalledWith({
-      parentNodeId: baseNode.id,
+      ...createRemoteFileNodeMock({ store, cache, createNodeId, actions }),
       url: node.nodes[1].imageUrl,
-      ext: null,
-      store,
-      cache,
-      createNode: actions.createNode,
-      createNodeId,
-      auth: {},
     });
     expect(cache.set).toHaveBeenCalledTimes(1);
   });
@@ -368,6 +356,7 @@ describe('gatsby-plugin-remote-images', () => {
       ...baseOptions,
       imagePath: 'ancestor.nodes[].imageUrl',
     };
+
     const {
       actions,
       createNodeId,
@@ -382,14 +371,8 @@ describe('gatsby-plugin-remote-images', () => {
     );
     expect(createNodeId).toHaveBeenCalledTimes(2);
     expect(createRemoteFileNode).toHaveBeenLastCalledWith({
-      parentNodeId: baseNode.id,
+      ...createRemoteFileNodeMock({ store, cache, createNodeId, actions }),
       url: node.ancestor.nodes[1].imageUrl,
-      ext: null,
-      store,
-      cache,
-      createNode: actions.createNode,
-      createNodeId,
-      auth: {},
     });
     expect(cache.set).toHaveBeenCalledTimes(1);
   });
@@ -414,6 +397,7 @@ describe('gatsby-plugin-remote-images', () => {
       ...baseOptions,
       imagePath: 'ancestor.nodes[].imageUrl',
     };
+
     const {
       actions,
       createNodeId,

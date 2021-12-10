@@ -12,6 +12,8 @@ const getGatsbyNodeHelperMocks = () => ({
       start: jest.fn(),
       end: jest.fn(),
     }),
+    error: jest.fn(),
+    verbose: jest.fn(),
   },
   store: {},
   cache: {

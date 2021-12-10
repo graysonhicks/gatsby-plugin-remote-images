@@ -5,6 +5,10 @@ const STALL_RETRY_LIMIT = process.env.GATSBY_STALL_RETRY_LIMIT
   ? parseInt(process.env.GATSBY_STALL_RETRY_LIMIT, 10)
   : 1;
 
+const STALL_TIMEOUT = process.env.GATSBY_STALL_TIMEOUT
+  ? parseInt(process.env.GATSBY_STALL_TIMEOUT, 10)
+  : 30000;
+
 exports.onCreateNode = async (
   { node, actions, store, cache, createNodeId, reporter },
   options
@@ -80,24 +84,39 @@ async function createRemoteImageNode(
   attempt = 1
 ) {
   let fileNode;
+  let timeout;
   const { prepareUrl } = options;
   if (typeof prepareUrl === 'function') {
     url = prepareUrl(url);
   }
 
+  const handleTimeout = () => {
+    if (attempt < STALL_RETRY_LIMIT) {
+      createRemoteImageNode(url, node, options, reporter, attempt + 1);
+    }
+  };
+
+  const resetTimeout = () => {
+    if (timeout) {
+      clearTimeout(timeout);
+    }
+    timeout = setTimeout(handleTimeout, STALL_TIMEOUT);
+  };
+
   try {
+    resetTimeout();
     fileNode = await createRemoteFileNode({
       ...options,
       url,
       parentNodeId: node.id,
     });
     reporter.verbose(`Created image from ${url}`);
+    clearTimeout(timeout);
   } catch (e) {
-    if (attempt < STALL_RETRY_LIMIT) {
-      createRemoteImageNode(url, node, options, reporter, attempt + 1);
-    } else {
-      reporter.error(`gatsby-plugin-remote-images ERROR:`, new Error(e));
+    if (timeout) {
+      clearTimeout(timeout);
     }
+    reporter.error(`gatsby-plugin-remote-images ERROR:`, new Error(e));
   }
   return fileNode;
 }

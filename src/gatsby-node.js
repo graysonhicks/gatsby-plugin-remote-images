@@ -1,14 +1,6 @@
 const { createRemoteFileNode } = require(`gatsby-source-filesystem`);
 const get = require('lodash/get');
 
-const STALL_RETRY_LIMIT = process.env.GATSBY_STALL_RETRY_LIMIT
-  ? parseInt(process.env.GATSBY_STALL_RETRY_LIMIT, 10)
-  : 1;
-
-const STALL_TIMEOUT = process.env.GATSBY_STALL_TIMEOUT
-  ? parseInt(process.env.GATSBY_STALL_TIMEOUT, 10)
-  : 30000;
-
 exports.onCreateNode = async (
   { node, actions, store, cache, createNodeId, reporter },
   options
@@ -83,41 +75,49 @@ async function createRemoteImageNode(
   reporter,
   attempt = 1
 ) {
+  const STALL_RETRY_LIMIT = process.env.GATSBY_STALL_RETRY_LIMIT
+    ? parseInt(process.env.GATSBY_STALL_RETRY_LIMIT, 10)
+    : 1;
+
+  const STALL_TIMEOUT = process.env.GATSBY_STALL_TIMEOUT
+    ? parseInt(process.env.GATSBY_STALL_TIMEOUT, 10)
+    : 30000;
+
   let fileNode;
-  let timeout;
+  const handleTimeout = async () => {
+    if (attempt < STALL_RETRY_LIMIT) {
+      reporter.verbose(`Retrying ${url} for try number ${attempt + 1}`);
+      await createRemoteImageNode(url, node, options, reporter, attempt + 1);
+    } else {
+      reporter.error(
+        `gatsby-plugin-remote-images ERROR:`,
+        new Error({
+          message: `Failed to download ${url} after ${STALL_RETRY_LIMIT} attempts`,
+        })
+      );
+    }
+  };
+  const timeout = setTimeout(handleTimeout, STALL_TIMEOUT);
+
   const { prepareUrl } = options;
   if (typeof prepareUrl === 'function') {
     url = prepareUrl(url);
   }
 
-  const handleTimeout = () => {
-    if (attempt < STALL_RETRY_LIMIT) {
-      createRemoteImageNode(url, node, options, reporter, attempt + 1);
-    }
-  };
-
-  const resetTimeout = () => {
-    if (timeout) {
-      clearTimeout(timeout);
-    }
-    timeout = setTimeout(handleTimeout, STALL_TIMEOUT);
-  };
-
   try {
-    resetTimeout();
     fileNode = await createRemoteFileNode({
       ...options,
       url,
       parentNodeId: node.id,
     });
     reporter.verbose(`Created image from ${url}`);
-    clearTimeout(timeout);
   } catch (e) {
     if (timeout) {
       clearTimeout(timeout);
     }
     reporter.error(`gatsby-plugin-remote-images ERROR:`, new Error(e));
   }
+  clearTimeout(timeout);
   return fileNode;
 }
 
@@ -158,7 +158,7 @@ async function createImageNodes(urls, node, options, reporter) {
 
 // Creates a file node and associates the parent node to its new child
 async function createImageNode(url, node, options, reporter) {
-  const { name, imagePathSegments, prepareUrl } = options;
+  const { name } = options;
 
   if (!url) {
     return;

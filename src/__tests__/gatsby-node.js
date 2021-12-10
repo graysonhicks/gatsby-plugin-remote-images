@@ -32,39 +32,34 @@ const mockContext = {
   },
 };
 
+const baseNode = {
+  id: 'testing',
+  parent: null,
+  imageUrl: 'https://dummyimage.com/600x400/000/fff.png',
+  internal: {
+    contentDigest: 'testdigest',
+    type: 'test',
+    mediaType: 'image/png',
+  },
+};
+const baseOptions = {
+  nodeType: 'test',
+  imagePath: 'imageUrl',
+};
+
+const createRemoteFileNodeMock = ({ store, cache, actions, createNodeId }) => ({
+  parentNodeId: baseNode.id,
+  ext: null,
+  store,
+  cache,
+  createNode: actions.createNode,
+  createNodeId,
+  auth: {},
+  name: 'localImage',
+  prepareUrl: null,
+});
+
 describe('gatsby-plugin-remote-images', () => {
-  const baseNode = {
-    id: 'testing',
-    parent: null,
-    imageUrl: 'https://dummyimage.com/600x400/000/fff.png',
-    internal: {
-      contentDigest: 'testdigest',
-      type: 'test',
-      mediaType: 'image/png',
-    },
-  };
-  const baseOptions = {
-    nodeType: 'test',
-    imagePath: 'imageUrl',
-  };
-
-  const createRemoteFileNodeMock = ({
-    store,
-    cache,
-    actions,
-    createNodeId,
-  }) => ({
-    parentNodeId: baseNode.id,
-    ext: null,
-    store,
-    cache,
-    createNode: actions.createNode,
-    createNodeId,
-    auth: {},
-    name: 'localImage',
-    prepareUrl: null,
-  });
-
   it('creates remote file node with defaults', async () => {
     const node = {
       ...baseNode,
@@ -425,3 +420,67 @@ describe('gatsby-plugin-remote-images', () => {
     });
   });
 });
+
+// describe('timeout tests', () => {
+//   const ORIGINAL_ENV = process.env;
+
+//   beforeEach(() => {
+//     jest.resetModules(); // Most important - it clears the cache
+//     process.env = { ...ORIGINAL_ENV }; // Make a copy
+//   });
+
+//   afterAll(() => {
+//     process.env = ORIGINAL_ENV; // Restore old environment
+//   });
+
+//   it('times out', async () => {
+//     process.env.GATSBY_STALL_RETRY_LIMIT = 1;
+//     process.env.GATSBY_STALL_TIMEOUT = 1;
+//     const node = {
+//       ...baseNode,
+//     };
+//     const options = {
+//       ...baseOptions,
+//     };
+
+//     const {
+//       actions,
+//       createNodeId,
+//       createResolvers: mockCreateResolvers,
+//       store,
+//       cache,
+//       reporter,
+//     } = getGatsbyNodeHelperMocks();
+
+//     await onCreateNode(
+//       { node, actions, createNodeId, store, cache, reporter },
+//       options
+//     );
+//     expect(createNodeId).toHaveBeenCalledTimes(1);
+//     expect(createRemoteFileNode).toHaveBeenLastCalledWith({
+//       ...createRemoteFileNodeMock({ store, cache, createNodeId, actions }),
+//       url: node.imageUrl,
+//     });
+
+//     createResolvers({ cache, createResolvers: mockCreateResolvers }, options);
+//     expect(mockCreateResolvers).toHaveBeenCalledTimes(1);
+//     expect(mockCreateResolvers).toHaveBeenLastCalledWith({
+//       [options.nodeType]: {
+//         localImage: {
+//           type: 'File',
+//           resolve: expect.any(Function),
+//         },
+//       },
+//     });
+
+//     mockContext.nodeModel.getNodeById.mockResolvedValueOnce({
+//       id: 'newFileNode',
+//     });
+//     const fileNodeResolver =
+//       mockCreateResolvers.mock.calls[0][0][options.nodeType].localImage.resolve;
+
+//     expect(fileNodeResolver(baseNode, null, mockContext)).resolves.toEqual({
+//       id: 'newFileNode',
+//     });
+//   });
+// });

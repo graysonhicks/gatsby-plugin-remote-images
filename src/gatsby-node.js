@@ -233,6 +233,7 @@ exports.createResolvers = ({ cache, createResolvers }, options) => {
             const fileNodeMap = await cache.get(
               getCacheKeyForNodeId(source.id)
             );
+            if (!fileNodeMap) return null;
             return context.nodeModel.getNodeById({ id: fileNodeMap[name] });
           },
         },

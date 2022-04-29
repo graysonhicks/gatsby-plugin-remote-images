@@ -1,8 +1,9 @@
 const { createRemoteFileNode } = require(`gatsby-source-filesystem`);
 const get = require('lodash/get');
+let i = 0;
 
 exports.onCreateNode = async (
-  { node, actions, store, cache, createNodeId, reporter },
+  { node, actions, store, cache, createNodeId, createContentDigest, reporter },
   options
 ) => {
   const { createNode } = actions;
@@ -21,6 +22,7 @@ exports.onCreateNode = async (
     cache,
     createNode,
     createNodeId,
+    createContentDigest,
     auth,
     ext,
     name,
@@ -136,10 +138,6 @@ async function createImageNode(url, node, options, reporter, silent) {
   const { name, imagePathSegments, prepareUrl, ...restOfOptions } = options;
   let fileNode;
 
-  if (!url) {
-    return;
-  }
-
   if (typeof prepareUrl === 'function') {
     url = prepareUrl(url);
   }
@@ -155,6 +153,21 @@ async function createImageNode(url, node, options, reporter, silent) {
     if (!silent) {
       reporter.error(`gatsby-plugin-remote-images ERROR:`, new Error(e));
     }
+    ++i;
+
+    console.log(`creating fake file node ${i}...`);
+    fileNode = await options.createNode(
+      {
+        id: options.createNodeId(`${i}`),
+        parent: node.id,
+        internal: {
+          type: 'File',
+          mediaType: 'application/octet-stream',
+          contentDigest: options.createContentDigest(`${i}`),
+        },
+      },
+      { name: 'gatsby-source-filesystem' }
+    );
   }
 
   // Store the mapping between the current node and the newly created File node

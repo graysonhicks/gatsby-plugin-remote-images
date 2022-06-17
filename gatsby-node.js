@@ -29,6 +29,9 @@ exports.createSchemaCustomization = (gatsbyUtils, pluginOptions) => {
           id: 'ID!',
         },
         interfaces: [`Node`, `RemoteFile`],
+        extensions: {
+          infer: true,
+        },
       }),
       {
         schema,
@@ -194,10 +197,11 @@ async function createImageNode(url, node, options, reporter, silent) {
         id: fileNodeId,
         parent: node.id,
         url: url,
-        filename: node.id + '.jpg',
+        filename: node.id + '.' + metadata.type,
         height: metadata.height,
         width: metadata.width,
         mimeType: metadata.mime,
+        test: 'test',
         internal: {
           type: 'RemoteImageFile',
           contentDigest: node.internal.contentDigest,

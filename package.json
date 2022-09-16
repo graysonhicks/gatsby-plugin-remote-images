@@ -1,6 +1,6 @@
 {
   "name": "gatsby-plugin-remote-images",
-  "version": "3.4.0",
+  "version": "3.5.0",
   "description": "Gatsby plugin to use gatsby-image on remote images from absolute path string fields on other nodes.",
   "author": "Grayson Hicks <graysonhicks@gmail.com>",
   "main": "gatsby-node.js",
@@ -37,7 +37,7 @@
     "rimraf": "^3.0.2"
   },
   "dependencies": {
-    "gatsby-source-filesystem": "^3.4.0",
+    "gatsby-source-filesystem": "^4.0.0",
     "lodash": "^4.17.15"
   },
   "scripts": {

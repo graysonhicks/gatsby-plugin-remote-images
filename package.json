@@ -28,7 +28,7 @@
     "@babel/cli": "^7.0.0",
     "@babel/core": "^7.0.0",
     "babel-jest": "^29.0.3",
-    "babel-preset-gatsby-package": "^1.4.0",
+    "babel-preset-gatsby-package": "^2.23.0",
     "cross-env": "^7.0.3",
     "husky": "^3.1.0",
     "jest": "^29.0.3",

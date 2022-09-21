@@ -1,58 +1,27 @@
 {
-  "name": "gatsby-plugin-remote-images",
-  "version": "3.5.0",
-  "description": "Gatsby plugin to use gatsby-image on remote images from absolute path string fields on other nodes.",
-  "author": "Grayson Hicks <graysonhicks@gmail.com>",
-  "main": "gatsby-node.js",
-  "files": [
-    "gatsby-node.js",
-    "README.md"
+  "private": true,
+  "workspaces": [
+    "site",
+    "plugin"
   ],
-  "repository": "graysonhicks/gatsby-plugin-remote-images",
-  "keywords": [
-    "gatsby",
-    "gatsby-plugin",
-    "gatsby-image",
-    "gatsby-source-filesystem",
-    "plugin",
-    "images",
-    "remote",
-    "download",
-    "api"
-  ],
-  "license": "MIT",
-  "peerDependencies": {
-    "gatsby": "^2.2.0 || ^3.0.0 || ^4.0.0"
+  "scripts": {
+    "test": "jest",
+    "watch": "jest --watch",
+    "build": "yarn workspace site build",
+    "serve": "yarn workspace site serve",
+    "develop": "yarn workspace site develop",
+    "clean": "yarn workspace site clean",
+    "format": "prettier --write \"**/*.{js,jsx,ts,tsx,json,css,scss,md}\""
   },
   "devDependencies": {
-    "@babel/cli": "^7.0.0",
-    "@babel/core": "^7.0.0",
-    "babel-jest": "^29.0.3",
-    "babel-preset-gatsby-package": "^1.4.0",
-    "cross-env": "^7.0.3",
+    "babel-jest": "27.4.2",
+    "babel-preset-gatsby": "2.3.0",
+    "jest": "27.4.3",
     "husky": "^3.1.0",
-    "jest": "^29.0.3",
     "lint-staged": "^9.5.0",
-    "prettier": "^1.19.1",
-    "rimraf": "^3.0.2"
+    "prettier": "^1.19.1"
   },
-  "dependencies": {
-    "gatsby-source-filesystem": "^4.0.0",
-    "lodash": "^4.17.15"
-  },
-  "scripts": {
-    "build": "rimraf ./gatsby-node.js && babel src --out-dir . --ignore **/__tests__",
-    "format": "prettier --write **/*.{js,jsx,ts,tsx,json,css,scss,md}",
-    "prepare": "cross-env NODE_ENV=production npm run build",
-    "watch": "babel -w src --out-dir . --ignore **/__tests__",
-    "test": "jest",
-    "prepublishOnly": "npm run build"
-  },
-  "prettier": {
-    "proseWrap": "always",
-    "singleQuote": true,
-    "trailingComma": "es5"
-  },
+  "repository": "graysonhicks/gatsby-plugin-remote-images",
   "husky": {
     "hooks": {
       "pre-commit": "lint-staged"

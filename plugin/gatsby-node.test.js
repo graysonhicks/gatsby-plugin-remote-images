@@ -1,7 +1,7 @@
 jest.mock('gatsby-source-filesystem');
 
 const { createRemoteFileNode } = require('gatsby-source-filesystem');
-const { onCreateNode, createResolvers } = require(`../gatsby-node`);
+const { onCreateNode, createResolvers } = require(`./gatsby-node`);
 
 const getGatsbyNodeHelperMocks = () => ({
   actions: { createNode: jest.fn() },

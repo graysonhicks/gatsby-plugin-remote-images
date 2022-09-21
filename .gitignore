@@ -1,8 +1,4 @@
-/*.js
-!index.js
-!gatsby-node.js
-!jest.config.js
-node_modules/
+node_modules
 .vscode
 .history
 .idea

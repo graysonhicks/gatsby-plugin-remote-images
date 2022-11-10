@@ -1,7 +1,7 @@
 # 💾 gatsby-plugin-remote-images
 
 Download images from any string field on another node so that those images can
-be queried with `gatsby-image`.
+be queried with `gatsby-plugin-image`.
 
 - [Usage](#usage)
   - [Install](#install)
@@ -9,9 +9,13 @@ be queried with `gatsby-image`.
     [Example Config with Optional Options](#example-config-with-optional-options)
 - [Why?](#why)
 - [Common Issues](#common-issues)
+
   - [gatsby-source-graphql](#gatsby-source-graphql)
   - [Traversing objects with arrays](#traversing-objects-with-arrays)
   - [Handling an Array of Image URLs](#handling-an-array-of-image-urls)
+
+**Note:** This plugin support `gatsby-plugin-image` and drops support for
+`gatsby-image` in `3.0.0`.
 
 ## Usage
 
@@ -42,7 +46,7 @@ module.exports = {
 
 | Option Name | Description                                                                                                                                                                                                                                                                                                                                      | Required | Default      |
 | ----------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | -------- | ------------ |
-| nodeType    | The node type that has the images you want to grab. This is generally the title-cased version of the word after the 'all' in GraphQL ie. allMyImages type is MyImages                                                                                                                                                                             | ✅       | `null`       |
+| nodeType    | The node type that has the images you want to grab. This is generally the title-cased version of the word after the 'all' in GraphQL ie. allMyImages type is MyImages                                                                                                                                                                            | ✅       | `null`       |
 | imagePath   | For simple object traversal, this is the string path to the image you want to use, relative to the node. This uses lodash .get, see [docs for accepted formats here](https://lodash.com/docs/4.17.11#get). For traversing objects with arrays at given depths, see [how to handle arrays along the path below](#traversing-objects-with-arrays). | ✅       | `null`       |
 | name        | Name you want to give new image field on the node. Defaults to `localImage`.                                                                                                                                                                                                                                                                     | ❌       | `localImage` |
 | auth        | Adds htaccess authentication to the download request if passed in.                                                                                                                                                                                                                                                                               | ❌       | `{}`         |
@@ -76,10 +80,10 @@ module.exports = {
 
 ## Why?
 
-Why do you need this plugin? The fantastic gatsby-image tool only works on
-_relative_ paths to locally stored images. This lets you use it on images from
-an API with an _absolute_ path. For example, look at these two response from one
-GraphQL query:
+Why do you need this plugin? The fantastic `gatsby-plugin-image` tool only works
+on _relative_ paths to locally stored images. This lets you use it on images
+from an API with an _absolute_ path. For example, look at these two response
+from one GraphQL query:
 
 _Query_
 
@@ -94,7 +98,7 @@ allMyNodes {
   }
 ```
 
-_Absolute imageUrl NOT available to gatsby-image_
+_Absolute imageUrl NOT available to `gatsby-plugin-image`_
 
 ```javascript
 allMyNodes: [
@@ -107,7 +111,7 @@ allMyNodes: [
 ];
 ```
 
-_Relative imageUrl IS available to gatsby-image_
+_Relative imageUrl IS available to `gatsby-plugin-image`_
 
 ```javascript
 allMyNodes: [
@@ -122,7 +126,7 @@ allMyNodes: [
 
 If you don't control the API that you are hitting (many third party APIs return
 a field with a string to an absolute path for an image), this means those image
-aren't run through gatsby-image and you lose all of the benefits.
+aren't run through `gatsby-plugin-image` and you lose all of the benefits.
 
 To get the images and make them available for the above example, follow the
 install instructions and your config should look like this:
@@ -144,7 +148,8 @@ module.exports = {
 };
 ```
 
-Now, if we query `allMyNodes` we can query as we would any gatsby-image node:
+Now, if we query `allMyNodes` we can query as we would any `gatsby-plugin-image`
+node:
 
 ```graphql
 allMyNodes {
@@ -152,9 +157,7 @@ allMyNodes {
     node {
       localImage {
         childImageSharp {
-          fluid(maxWidth: 400, maxHeight: 250) {
-            ...GatsbyImageSharpFluid
-          }
+          gatsbyImageData(width: 400)
         }
       }
     }
@@ -213,16 +216,15 @@ module.exports = {
 };
 ```
 
-Now, if we query `allMyNodes` we can query as we would any gatsby-image node:
+Now, if we query `allMyNodes` we can query as we would any `gatsby-plugin-image`
+node:
 
 ```graphql
 allMyNodes {
   nodes {
     localImage {
       childImageSharp {
-        fluid(maxWidth: 400, maxHeight: 250) {
-          ...GatsbyImageSharpFluid
-        }
+        gatsbyImageData(width: 400)
       }
     }
   }
@@ -274,18 +276,16 @@ accordingly:
 }
 ```
 
-Now, if we query `allMyNodes` we can query as we would any gatsby-image node,
-but now `localImage` (or `localImages` as in the example above) we would get an
-array of Gatsby images, instead of just one.
+Now, if we query `allMyNodes` we can query as we would any `gatsby-plugin-image`
+node, but now `localImage` (or `localImages` as in the example above) we would
+get an array of Gatsby images, instead of just one.
 
 ```graphql
 allMyNodes {
   nodes {
     localImages {
       childImageSharp {
-        fluid(maxWidth: 400, maxHeight: 250) {
-          ...GatsbyImageSharpFluid
-        }
+        gatsbyImageData(width: 400)
       }
     }
   }

@@ -190,7 +190,7 @@ async function createImageNode(url, node, options, reporter, silent) {
 
   try {
     if (mode === 'cdn') {
-      fieldNodeId = options.createNodeId(`RemoteImageFile >>> ${node.id}`);
+      fileNodeId = options.createNodeId(`RemoteImageFile >>> ${node.id}`);
       const metadata = await probe(url);
       await options.createNode({
         id: fileNodeId,

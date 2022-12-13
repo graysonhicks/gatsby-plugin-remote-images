@@ -2,6 +2,19 @@ const { createRemoteFileNode } = require(`gatsby-source-filesystem`);
 const get = require('lodash/get');
 let i = 0;
 
+exports.pluginOptionsSchema = ({ Joi }) => {
+  return Joi.object({
+    nodeType: Joi.string().required(),
+    imagePath: Joi.string().required(),
+    name: Joi.string().default('localImage'),
+    auth: Joi.string(),
+    ext: Joi.string(),
+    prepareUrl: Joi.function(),
+    type: Joi.string().valid('array'),
+    silent: Joi.boolean().default(false),
+  });
+};
+
 exports.onCreateNode = async (
   { node, actions, store, cache, createNodeId, createContentDigest, reporter },
   options

@@ -1,6 +1,42 @@
 const { createRemoteFileNode } = require(`gatsby-source-filesystem`);
+const {
+  addRemoteFilePolyfillInterface,
+} = require('gatsby-plugin-utils/polyfill-remote-file');
+
 const get = require('lodash/get');
+const probe = require('probe-image-size');
+
 let i = 0;
+
+exports.pluginOptionsSchema = ({ Joi }) => {
+  return Joi.object({
+    mode: Joi.string()
+      .valid('cdn', 'local')
+      .default('local'),
+  });
+};
+
+exports.createSchemaCustomization = ({ actions, schema }, { mode }) => {
+  if (mode === 'cdn') {
+    const RemoteImageFileType = addRemoteFilePolyfillInterface(
+      schema.buildObjectType({
+        name: 'RemoteImageFile',
+        fields: {
+          id: 'ID!',
+        },
+        interfaces: ['Node', 'RemoteFile'],
+        extensions: {
+          infer: true,
+        },
+      }),
+      {
+        schema,
+        actions,
+      }
+    );
+    actions.createTypes([RemoteImageFileType]);
+  }
+};
 
 exports.onCreateNode = async (
   { node, actions, store, cache, createNodeId, createContentDigest, reporter },
@@ -16,6 +52,7 @@ exports.onCreateNode = async (
     prepareUrl = null,
     type = 'object',
     silent = false,
+    mode,
   } = options;
   const createImageNodeOptions = {
     store,
@@ -27,6 +64,7 @@ exports.onCreateNode = async (
     ext,
     name,
     prepareUrl,
+    mode,
   };
 
   if (node.internal.type === nodeType) {
@@ -135,7 +173,15 @@ async function createImageNodes(urls, node, options, reporter, silent) {
 
 // Creates a file node and associates the parent node to its new child
 async function createImageNode(url, node, options, reporter, silent) {
-  const { name, imagePathSegments, prepareUrl, ...restOfOptions } = options;
+  const {
+    name,
+    mode,
+    imagePathSegments,
+    prepareUrl,
+    ...restOfOptions
+  } = options;
+
+  let fileNodeId;
   let fileNode;
 
   if (typeof prepareUrl === 'function') {
@@ -143,19 +189,42 @@ async function createImageNode(url, node, options, reporter, silent) {
   }
 
   try {
-    fileNode = await createRemoteFileNode({
-      ...restOfOptions,
-      url,
-      parentNodeId: node.id,
-    });
-    reporter.verbose(`Created image from ${url}`);
+    if (mode === 'cdn') {
+      fieldNodeId = options.createNodeId(`RemoteImageFile >>> ${node.id}`);
+      const metadata = await probe(url);
+      await options.createNode({
+        id: fileNodeId,
+        parent: node.id,
+        url: url,
+        filename: `${node.id}.${metadata.type}`,
+        height: metadata.height,
+        width: metadata.width,
+        mimeType: metadata.mime,
+        internal: {
+          type: 'RemoteImageFile',
+          contentDigest: node.internal.contentDigest,
+        },
+      });
+      if (!silent) {
+        reporter.verbose(`Created RemoteImageFile node from ${url}`);
+      }
+    } else {
+      fileNode = await createRemoteFileNode({
+        ...restOfOptions,
+        url,
+        parentNodeId: node.id,
+      });
+      fileNodeId = fileNode.id;
+      if (!silent) {
+        reporter.verbose(`Created image from ${url}`);
+      }
+    }
   } catch (e) {
     if (!silent) {
       reporter.error(`gatsby-plugin-remote-images ERROR:`, new Error(e));
     }
     ++i;
 
-    console.log(`creating fake file node ${i}...`);
     fileNode = await options.createNode(
       {
         id: options.createNodeId(`${i}`),
@@ -221,7 +290,7 @@ exports.createResolvers = ({ cache, createResolvers }, options) => {
     const resolvers = {
       [nodeType]: {
         [name]: {
-          type: '[File]',
+          type: options.mode === 'cdn' ? '[RemoteImageFile]' : '[File]',
           resolve: async (source, _, context) => {
             const fileNodeMap = await cache.get(
               getCacheKeyForNodeId(source.id)
@@ -241,7 +310,7 @@ exports.createResolvers = ({ cache, createResolvers }, options) => {
     const resolvers = {
       [nodeType]: {
         [name]: {
-          type: 'File',
+          type: options.mode === 'cdn' ? 'RemoteImageFile' : 'File',
           resolve: async (source, _, context) => {
             const fileNodeMap = await cache.get(
               getCacheKeyForNodeId(source.id)

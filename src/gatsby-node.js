@@ -10,6 +10,14 @@ let i = 0;
 
 exports.pluginOptionsSchema = ({ Joi }) => {
   return Joi.object({
+    nodeType: Joi.string().required(),
+    imagePath: Joi.string().required(),
+    name: Joi.string(),
+    auth: Joi.object(),
+    ext: Joi.string(),
+    prepareUrl: Joi.function(),
+    type: Joi.object(),
+    silent: Joi.boolean(),
     mode: Joi.string()
       .valid('cdn', 'local')
       .default('local'),

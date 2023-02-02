@@ -20,6 +20,7 @@ exports.onCreateNode = async (
     prepareUrl = null,
     type = 'object',
     silent = false,
+    skipUndefinedUrls = false,
   } = options;
   const createImageNodeOptions = {
     store,
@@ -31,6 +32,7 @@ exports.onCreateNode = async (
     ext,
     name,
     prepareUrl,
+    skipUndefinedUrls,
   };
 
   if (node.internal.type === nodeType) {
@@ -101,6 +103,8 @@ async function createImageNodes(urls, node, options, reporter, silent) {
           url = prepareUrl(url);
         }
 
+        if (options.skipUndefinedUrls && !url) return 
+
         try {
           fileNode = await createRemoteFileNode({
             ...restOfOptions,
@@ -144,6 +148,8 @@ async function createImageNode(url, node, options, reporter, silent) {
   if (typeof prepareUrl === 'function') {
     url = prepareUrl(url);
   }
+
+  if (options.skipUndefinedUrls && !url) return 
 
   try {
     fileNode = await createRemoteFileNode({

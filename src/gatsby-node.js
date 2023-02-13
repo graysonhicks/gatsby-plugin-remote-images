@@ -248,7 +248,7 @@ async function createImageNode(url, node, options, reporter, silent) {
   }
 
   // Store the mapping between the current node and the newly created File node
-  if (fileNode) {
+  if (fileNode || mode === 'cdn') {
     // This associates the existing node (of user-specified type) with the new
     // File nodes created via createRemoteFileNode. The new File nodes will be
     // resolved dynamically through the Gatsby schema customization
@@ -261,7 +261,7 @@ async function createImageNode(url, node, options, reporter, silent) {
     const existingFileNodeMap = await options.cache.get(cacheKey);
     await options.cache.set(cacheKey, {
       ...existingFileNodeMap,
-      [name]: fileNode.id,
+      [name]: fileNode ? fileNode.id : fileNodeId,
     });
   }
 }

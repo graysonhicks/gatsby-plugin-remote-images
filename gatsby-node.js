@@ -17,6 +17,7 @@ exports.pluginOptionsSchema = ({ Joi }) => {
     prepareUrl: Joi.function(),
     type: Joi.object(),
     silent: Joi.boolean(),
+    skipUndefinedUrls: Joi.boolean(),
   });
 };
 const isImageCdnEnabled = () => {
@@ -134,6 +135,7 @@ async function createImageNodes(urls, node, options, reporter, silent) {
         if (typeof prepareUrl === 'function') {
           url = prepareUrl(url);
         }
+        if (options.skipUndefinedUrls && !url) return;
         try {
           fileNode = await createRemoteFileNode({
             ...restOfOptions,
@@ -178,6 +180,7 @@ async function createImageNode(url, node, options, reporter, silent) {
   if (typeof prepareUrl === 'function') {
     url = prepareUrl(url);
   }
+  if (options.skipUndefinedUrls && !url) return;
   try {
     if (isImageCdnEnabled()) {
       fileNodeId = options.createNodeId(`RemoteImageFile >>> ${node.id}`);

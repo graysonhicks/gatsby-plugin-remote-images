@@ -9,11 +9,13 @@ be queried with `gatsby-plugin-image`.
     [Example Config with Optional Options](#example-config-with-optional-options)
 - [Why?](#why)
 - [Common Issues](#common-issues)
+
   - [gatsby-source-graphql](#gatsby-source-graphql)
   - [Traversing objects with arrays](#traversing-objects-with-arrays)
   - [Handling an Array of Image URLs](#handling-an-array-of-image-urls)
-  
-**Note:** This plugin support `gatsby-plugin-image` and drops support for `gatsby-image` in `3.0.0`.
+
+**Note:** This plugin support `gatsby-plugin-image` and drops support for
+`gatsby-image` in `3.0.0`.
 
 ## Usage
 
@@ -42,16 +44,17 @@ module.exports = {
 
 ### Options
 
-| Option Name | Description                                                                                                                                                                                                                                                                                                                                      | Required | Default      |
-| ----------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | -------- | ------------ |
-| nodeType    | The node type that has the images you want to grab. This is generally the title-cased version of the word after the 'all' in GraphQL ie. allMyImages type is MyImages                                                                                                                                                                             | ✅       | `null`       |
-| imagePath   | For simple object traversal, this is the string path to the image you want to use, relative to the node. This uses lodash .get, see [docs for accepted formats here](https://lodash.com/docs/4.17.11#get). For traversing objects with arrays at given depths, see [how to handle arrays along the path below](#traversing-objects-with-arrays). | ✅       | `null`       |
-| name        | Name you want to give new image field on the node. Defaults to `localImage`.                                                                                                                                                                                                                                                                     | ❌       | `localImage` |
-| auth        | Adds htaccess authentication to the download request if passed in.                                                                                                                                                                                                                                                                               | ❌       | `{}`         |
-| ext         | Sets the file extension. Useful for APIs that separate the image file path from its extension. Or for changing the extension. Defaults to existing file extension.                                                                                                                                                                               | ❌       | `null`       |
-| prepareUrl  | Allows modification of the URL per image if needed. Expects a function taking the original URL as a parameter and returning the desired URL.                                                                                                                                                                                                     | ❌       | `null`       |
-| type        | Tell the plugin that the leaf node is an _array_ of images instead of one single string. Only option here is `array`. For example usage, [see here](#handling-an-array-of-image-urls).                                                                                                                                                           | ❌       | `object`     |
-| silent      | Set to `true` to silence image load errors in the console.                                                                                                                                                                                                                                                                                       | ❌       | `boolean`    |
+| Option Name       | Description                                                                                                                                                                                                                                                                                                                                      | Required | Default      |
+| ----------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | -------- | ------------ |
+| nodeType          | The node type that has the images you want to grab. This is generally the title-cased version of the word after the 'all' in GraphQL ie. allMyImages type is MyImages                                                                                                                                                                            | ✅       | `null`       |
+| imagePath         | For simple object traversal, this is the string path to the image you want to use, relative to the node. This uses lodash .get, see [docs for accepted formats here](https://lodash.com/docs/4.17.11#get). For traversing objects with arrays at given depths, see [how to handle arrays along the path below](#traversing-objects-with-arrays). | ✅       | `null`       |
+| name              | Name you want to give new image field on the node. Defaults to `localImage`.                                                                                                                                                                                                                                                                     | ❌       | `localImage` |
+| auth              | Adds htaccess authentication to the download request if passed in.                                                                                                                                                                                                                                                                               | ❌       | `{}`         |
+| ext               | Sets the file extension. Useful for APIs that separate the image file path from its extension. Or for changing the extension. Defaults to existing file extension.                                                                                                                                                                               | ❌       | `null`       |
+| prepareUrl        | Allows modification of the URL per image if needed. Expects a function taking the original URL as a parameter and returning the desired URL.                                                                                                                                                                                                     | ❌       | `null`       |
+| type              | Tell the plugin that the leaf node is an _array_ of images instead of one single string. Only option here is `array`. For example usage, [see here](#handling-an-array-of-image-urls).                                                                                                                                                           | ❌       | `object`     |
+| silent            | Set to `true` to silence image load errors in the console.                                                                                                                                                                                                                                                                                       | ❌       | `boolean`    |
+| skipUndefinedUrls | This skips undefined `urls` and adds an easy way for the user to implement their own "undefined" values by returning undefined from the `prepareUrl()` function. See [here](https://github.com/graysonhicks/gatsby-plugin-remote-images/pull/134#issue-1568549719).                                                                              | ❌       | `boolean`    |
 
 #### Example Config with Optional Options
 
@@ -78,10 +81,10 @@ module.exports = {
 
 ## Why?
 
-Why do you need this plugin? The fantastic `gatsby-plugin-image` tool only works on
-_relative_ paths to locally stored images. This lets you use it on images from
-an API with an _absolute_ path. For example, look at these two response from one
-GraphQL query:
+Why do you need this plugin? The fantastic `gatsby-plugin-image` tool only works
+on _relative_ paths to locally stored images. This lets you use it on images
+from an API with an _absolute_ path. For example, look at these two response
+from one GraphQL query:
 
 _Query_
 
@@ -146,7 +149,8 @@ module.exports = {
 };
 ```
 
-Now, if we query `allMyNodes` we can query as we would any `gatsby-plugin-image` node:
+Now, if we query `allMyNodes` we can query as we would any `gatsby-plugin-image`
+node:
 
 ```graphql
 allMyNodes {
@@ -213,7 +217,8 @@ module.exports = {
 };
 ```
 
-Now, if we query `allMyNodes` we can query as we would any `gatsby-plugin-image` node:
+Now, if we query `allMyNodes` we can query as we would any `gatsby-plugin-image`
+node:
 
 ```graphql
 allMyNodes {
@@ -272,9 +277,9 @@ accordingly:
 }
 ```
 
-Now, if we query `allMyNodes` we can query as we would any `gatsby-plugin-image` node,
-but now `localImage` (or `localImages` as in the example above) we would get an
-array of Gatsby images, instead of just one.
+Now, if we query `allMyNodes` we can query as we would any `gatsby-plugin-image`
+node, but now `localImage` (or `localImages` as in the example above) we would
+get an array of Gatsby images, instead of just one.
 
 ```graphql
 allMyNodes {

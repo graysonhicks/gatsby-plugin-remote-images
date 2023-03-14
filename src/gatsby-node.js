@@ -19,6 +19,7 @@ exports.pluginOptionsSchema = ({ Joi }) => {
     type: Joi.object(),
     silent: Joi.boolean(),
     skipUndefinedUrls: Joi.boolean(),
+    mode: Joi.string(),
   });
 };
 
@@ -29,8 +30,8 @@ const isImageCdnEnabled = () => {
   );
 };
 
-exports.createSchemaCustomization = ({ actions, schema }) => {
-  if (isImageCdnEnabled()) {
+exports.createSchemaCustomization = ({ actions, schema }, { mode }) => {
+  if (isImageCdnEnabled() || mode === 'cdn') {
     const RemoteImageFileType = addRemoteFilePolyfillInterface(
       schema.buildObjectType({
         name: 'RemoteImageFile',
@@ -65,6 +66,7 @@ exports.onCreateNode = async (
     prepareUrl = null,
     type = 'object',
     silent = false,
+    mode,
   } = options;
   const createImageNodeOptions = {
     store,
@@ -76,6 +78,7 @@ exports.onCreateNode = async (
     ext,
     name,
     prepareUrl,
+    mode,
   };
 
   if (node.internal.type === nodeType) {
@@ -133,7 +136,13 @@ function getCacheKeyForNodeId(nodeId) {
 }
 
 async function createImageNodes(urls, node, options, reporter, silent) {
-  const { name, imagePathSegments, prepareUrl, ...restOfOptions } = options;
+  const {
+    name,
+    mode,
+    imagePathSegments,
+    prepareUrl,
+    ...restOfOptions
+  } = options;
   let fileNode;
 
   if (!urls) {
@@ -187,7 +196,13 @@ async function createImageNodes(urls, node, options, reporter, silent) {
 
 // Creates a file node and associates the parent node to its new child
 async function createImageNode(url, node, options, reporter, silent) {
-  const { name, imagePathSegments, prepareUrl, ...restOfOptions } = options;
+  const {
+    name,
+    mode,
+    imagePathSegments,
+    prepareUrl,
+    ...restOfOptions
+  } = options;
 
   let fileNodeId;
   let fileNode;
@@ -199,7 +214,7 @@ async function createImageNode(url, node, options, reporter, silent) {
   if (options.skipUndefinedUrls && !url) return;
 
   try {
-    if (isImageCdnEnabled()) {
+    if (isImageCdnEnabled() || mode === 'cdn') {
       fileNodeId = options.createNodeId(`RemoteImageFile >>> ${node.id}`);
       const metadata = await probe(url);
       await options.createNode({
@@ -250,7 +265,7 @@ async function createImageNode(url, node, options, reporter, silent) {
   }
 
   // Store the mapping between the current node and the newly created File node
-  if (fileNode || isImageCdnEnabled()) {
+  if (fileNode || isImageCdnEnabled() || mode === 'cdn') {
     // This associates the existing node (of user-specified type) with the new
     // File nodes created via createRemoteFileNode. The new File nodes will be
     // resolved dynamically through the Gatsby schema customization
@@ -294,13 +309,22 @@ async function getAllFilesUrls(path, node, options) {
 }
 
 exports.createResolvers = ({ cache, createResolvers }, options) => {
-  const { nodeType, imagePath, name = 'localImage', type = 'object' } = options;
+  const {
+    nodeType,
+    mode,
+    imagePath,
+    name = 'localImage',
+    type = 'object',
+  } = options;
 
   if (type === 'array' || imagePath.includes('[].')) {
     const resolvers = {
       [nodeType]: {
         [name]: {
-          type: isImageCdnEnabled() ? '[RemoteImageFile]' : '[File]',
+          type:
+            isImageCdnEnabled() || mode === 'cdn'
+              ? '[RemoteImageFile]'
+              : '[File]',
           resolve: async (source, _, context) => {
             const fileNodeMap = await cache.get(
               getCacheKeyForNodeId(source.id)
@@ -320,7 +344,8 @@ exports.createResolvers = ({ cache, createResolvers }, options) => {
     const resolvers = {
       [nodeType]: {
         [name]: {
-          type: isImageCdnEnabled() ? 'RemoteImageFile' : 'File',
+          type:
+            isImageCdnEnabled() || mode === 'cdn' ? 'RemoteImageFile' : 'File',
           resolve: async (source, _, context) => {
             const fileNodeMap = await cache.get(
               getCacheKeyForNodeId(source.id)

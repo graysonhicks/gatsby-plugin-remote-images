@@ -37,7 +37,7 @@
     "rimraf": "^3.0.2"
   },
   "dependencies": {
-    "gatsby-source-filesystem": "^4.0.0",
+    "gatsby-source-filesystem": "^5.8.0",
     "lodash": "^4.17.15",
     "probe-image-size": "7.2.3"
   },

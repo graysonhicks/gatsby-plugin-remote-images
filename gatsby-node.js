@@ -19,7 +19,7 @@ exports.pluginOptionsSchema = ({
     auth: Joi.object(),
     ext: Joi.string(),
     prepareUrl: Joi.function(),
-    type: Joi.object(),
+    type: Joi.string(),
     silent: Joi.boolean(),
     skipUndefinedUrls: Joi.boolean()
   });

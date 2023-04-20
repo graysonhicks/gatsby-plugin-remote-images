@@ -16,7 +16,7 @@ exports.pluginOptionsSchema = ({ Joi }) => {
     auth: Joi.object(),
     ext: Joi.string(),
     prepareUrl: Joi.function(),
-    type: Joi.object(),
+    type: Joi.string(),
     silent: Joi.boolean(),
     skipUndefinedUrls: Joi.boolean(),
   });
@@ -116,7 +116,7 @@ exports.onCreateNode = async (
 function getPaths(node, path, ext = null) {
   const value = get(node, path);
   if (value) {
-    return value.map(url => (ext ? url + ext : url));
+    return value.map((url) => (ext ? url + ext : url));
   }
 }
 
@@ -164,7 +164,7 @@ async function createImageNodes(urls, node, options, reporter, silent) {
         return fileNode;
       })
     )
-  ).filter(fileNode => !!fileNode);
+  ).filter((fileNode) => !!fileNode);
 
   // Store the mapping between the current node and the newly created File node
   if (fileNodes.length) {
@@ -284,7 +284,7 @@ async function getAllFilesUrls(path, node, options) {
     ? // Recursively call function with next path segment for each array element
       (
         await Promise.all(
-          nextValue.map(item =>
+          nextValue.map((item) =>
             getAllFilesUrls(imagePathSegments[pathIndex + 1], item, options)
           )
         )
@@ -308,7 +308,7 @@ exports.createResolvers = ({ cache, createResolvers }, options) => {
             if (!fileNodeMap || !fileNodeMap[name]) {
               return [];
             }
-            return fileNodeMap[name].map(id =>
+            return fileNodeMap[name].map((id) =>
               context.nodeModel.getNodeById({ id })
             );
           },

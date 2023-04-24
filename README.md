@@ -55,6 +55,7 @@ module.exports = {
 | type              | Tell the plugin that the leaf node is an _array_ of images instead of one single string. Only option here is `array`. For example usage, [see here](#handling-an-array-of-image-urls).                                                                                                                                                           | ❌       | `object`     |
 | silent            | Set to `true` to silence image load errors in the console.                                                                                                                                                                                                                                                                                       | ❌       | `boolean`    |
 | skipUndefinedUrls | This skips undefined `urls` and adds an easy way for the user to implement their own "undefined" values by returning undefined from the `prepareUrl()` function. See [here](https://github.com/graysonhicks/gatsby-plugin-remote-images/pull/134#issue-1568549719).                                                                              | ❌       | `boolean`    |
+| mode              | This enables Gatsby ImageCDN support when set to `'cdn'`                                                                                                                                                                                                                                                                                         | ❌       | `null`       |
 
 #### Example Config with Optional Options
 
@@ -73,6 +74,7 @@ module.exports = {
         auth: { htaccess_user: `USER`, htaccess_pass: `PASSWORD` },
         ext: '.jpg',
         prepareUrl: url => (url.startsWith('//') ? `https:${url}` : url),
+        mode: 'cdn',
       },
     },
   ],
@@ -160,6 +162,21 @@ allMyNodes {
         childImageSharp {
           gatsbyImageData(width: 400)
         }
+      }
+    }
+  }
+}
+```
+
+Or if `mode` is set to `cdn`, we can query with the ImageCDN supported query
+like so:
+
+```graphql
+allMyNodes {
+  edges {
+    node {
+      localImage {
+        gatsbyImage(width: 400)
       }
     }
   }

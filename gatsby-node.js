@@ -68,6 +68,7 @@ exports.onCreateNode = async ({
     ext = null,
     prepareUrl = null,
     type = 'object',
+    skipUndefinedUrls = false,
     silent = false
   } = options;
   const createImageNodeOptions = {
@@ -79,6 +80,7 @@ exports.onCreateNode = async ({
     auth,
     ext,
     name,
+    skipUndefinedUrls,
     prepareUrl
   };
   if (node.internal.type === nodeType) {
